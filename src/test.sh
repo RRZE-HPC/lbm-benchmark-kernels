@@ -32,12 +32,25 @@ XTag="-test"
 
 Build=release
 
+if [ "$#" -lt 1 ]; then
+  echo "Compiles and runs several test cases."
+  echo ""
+  echo "Usage: test.sh <config>"
+  echo ""
+  echo "Select a configuration via config: linux-gcc or linux-intel."
+  exit 1
+fi
 
+if [ "$1" == "-h" -o "$1" == "-help" -o "$1" == "--help" ]; then
+  echo "Compiles and runs several test cases."
+  echo ""
+  echo "Usage: test.sh <config>"
+  echo ""
+  echo "Select a configuration via config: linux-gcc or linux-intel."
+  exit 1
+fi
 
-Config=linux-intel
-
-module purge
-module add intel64
+Config="$1"
 
 make clean-all
 make -j CONFIG=$Config TAG=$XTag-debug
@@ -48,22 +61,3 @@ BinaryV="../bin/lbmbenchk-$Config-$Build$XTag-v"
 BinaryB="../bin/lbmbenchk-$Config-$Build$XTag-b"
 
 ./test-verification.sh "$BinaryV"
-
-
-
-Config=linux-gcc
-
-module purge
-module add gcc
-
-make clean-all
-
-make -j CONFIG=$Config TAG=$XTag-debug
-make -j CONFIG=$Config BUILD=$Build TAG=$XTag-v
-make -j CONFIG=$Config BUILD=$Build TAG=$XTag-b BENCHMARK=on
-
-BinaryV="../bin/lbmbenchk-$Config-$Build$XTag-v"
-BinaryB="../bin/lbmbenchk-$Config-$Build$XTag-b"
-
-./test-verification.sh "$BinaryV"
-
