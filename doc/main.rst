@@ -236,6 +236,16 @@ Things the binary does nor check or controll:
   function for different ISA extensions. Make sure the code you might think is
   executed is actually the code which is executed.
 
+
+Acknowledgements
+================
+
+This work was funded by BMBF, grant no. 01IH15003A (project SKAMPY).
+
+This work was funded by KONWHIR project OMI4PAPS.
+
+
+
 .. |datetime| date:: %Y-%m-%d %H:%M
 
 Document was generated at |datetime|.
