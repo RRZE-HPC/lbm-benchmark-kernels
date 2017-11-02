@@ -336,6 +336,56 @@ ul.auto-toc {
   list-style-type: none }
 
 </style>
+<style type="text/css">
+
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: sans-serif;
+  font-size: 100%;
+  background-color: #dcdcdc;
+}
+
+h1.title {
+  background-color: gray;
+  color: white
+}
+
+table.footnote {
+  padding-left: 0.5ex;
+}
+
+table.citation {
+  padding-left: 0.5ex
+}
+
+td.label {
+  width: 10%;
+}
+
+table, table.docutils, td, th {
+  border: 0;
+}
+
+table.citation, table.footnote {
+  width: 100%;
+}
+
+th {
+    background-color: lavender ;
+}
+
+tr:nth-child(even) {
+    xxbackground-color: aliceblue;
+    background-color: white; 
+}
+tr:nth-child(odd) {
+    xxbackground-color: lavender;
+    background-color: whitesmoke;
+}
+
+
+
+</style>
 </head>
 <body>
 <div class="document" id="lbm-benchmark-kernels-documentation">
@@ -375,15 +425,23 @@ ul.auto-toc {
 <li><a class="reference internal" href="#benchmarking" id="id4">1.2&nbsp;&nbsp;&nbsp;Benchmarking</a></li>
 <li><a class="reference internal" href="#release-and-verification" id="id5">1.3&nbsp;&nbsp;&nbsp;Release and Verification</a></li>
 <li><a class="reference internal" href="#compilers" id="id6">1.4&nbsp;&nbsp;&nbsp;Compilers</a></li>
-<li><a class="reference internal" href="#options-summary" id="id7">1.5&nbsp;&nbsp;&nbsp;Options Summary</a></li>
+<li><a class="reference internal" href="#cleaning" id="id7">1.5&nbsp;&nbsp;&nbsp;Cleaning</a></li>
+<li><a class="reference internal" href="#options-summary" id="id8">1.6&nbsp;&nbsp;&nbsp;Options Summary</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#invocation" id="id8">2&nbsp;&nbsp;&nbsp;Invocation</a><ul class="auto-toc">
-<li><a class="reference internal" href="#command-line-parameters" id="id9">2.1&nbsp;&nbsp;&nbsp;Command Line Parameters</a></li>
+<li><a class="reference internal" href="#invocation" id="id9">2&nbsp;&nbsp;&nbsp;Invocation</a><ul class="auto-toc">
+<li><a class="reference internal" href="#command-line-parameters" id="id10">2.1&nbsp;&nbsp;&nbsp;Command Line Parameters</a></li>
+<li><a class="reference internal" href="#kernels" id="id11">2.2&nbsp;&nbsp;&nbsp;Kernels</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#id1" id="id10">3&nbsp;&nbsp;&nbsp;Benchmarking</a></li>
-<li><a class="reference internal" href="#acknowledgements" id="id11">4&nbsp;&nbsp;&nbsp;Acknowledgements</a></li>
+<li><a class="reference internal" href="#id1" id="id12">3&nbsp;&nbsp;&nbsp;Benchmarking</a><ul class="auto-toc">
+<li><a class="reference internal" href="#padding" id="id13">3.1&nbsp;&nbsp;&nbsp;Padding</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#geometries" id="id14">4&nbsp;&nbsp;&nbsp;Geometries</a></li>
+<li><a class="reference internal" href="#results" id="id15">5&nbsp;&nbsp;&nbsp;Results</a></li>
+<li><a class="reference internal" href="#licence" id="id16">6&nbsp;&nbsp;&nbsp;Licence</a></li>
+<li><a class="reference internal" href="#acknowledgements" id="id17">7&nbsp;&nbsp;&nbsp;Acknowledgements</a></li>
 </ul>
 </div>
 <div class="section" id="compilation">
@@ -399,15 +457,15 @@ depending on compiler and build configuration.</p>
 <div class="section" id="debug-and-verification">
 <h2><a class="toc-backref" href="#id3">1.1&nbsp;&nbsp;&nbsp;Debug and Verification</a></h2>
 <pre class="literal-block">
-make
+make BUILD=debug BENCHMARK=off
 </pre>
-<p>Running <tt class="docutils literal">make</tt> without any arguments builds the debug version (BUILD=debug) of
+<p>Running <tt class="docutils literal">make</tt> with <tt class="docutils literal">BUILD=debug</tt> builds the debug version of
 the benchmark kernels, where no optimizations are performed,  line numbers and
 debug symbols are included as well as <tt class="docutils literal">DEBUG</tt> will be defined.  The resulting
 binary will be found in the <tt class="docutils literal">bin</tt> subdirectory and named
 <tt class="docutils literal"><span class="pre">lbmbenchk-linux-&lt;compiler&gt;-debug</span></tt>.</p>
-<p>Without any further specification the binary includes verification
-(<tt class="docutils literal">VERIFICATION=on</tt>), statistics (<tt class="docutils literal">STATISTICS</tt>), and VTK output
+<p>Specifying <tt class="docutils literal">BENCHMARK=off</tt> turns on verification
+(<tt class="docutils literal">VERIFICATION=on</tt>), statistics (<tt class="docutils literal">STATISTICS=on</tt>), and VTK output
 (<tt class="docutils literal">VTK_OUTPUT=on</tt>) enabled.</p>
 <p>Please note that the generated binary will therefore
 exhibit a poor performance.</p>
@@ -416,9 +474,10 @@ exhibit a poor performance.</p>
 <h2><a class="toc-backref" href="#id4">1.2&nbsp;&nbsp;&nbsp;Benchmarking</a></h2>
 <p>To generate a binary for benchmarking run make with</p>
 <pre class="literal-block">
-make BENCHMARK=on BUILD=release
+make
 </pre>
-<p>Here BUILD=release turns optimizations on and BENCHMARK=on disables
+<p>As default <tt class="docutils literal">BENCHMARK=on</tt> and <tt class="docutils literal">BUILD=release</tt> is set, where
+BUILD=release turns optimizations on and <tt class="docutils literal">BENCHMARK=on</tt> disables
 verfification, statistics, and VTK output.</p>
 </div>
 <div class="section" id="release-and-verification">
@@ -426,7 +485,7 @@ verfification, statistics, and VTK output.</p>
 <p>Verification with the debug builds can be extremely slow. Hence verification
 capabilities can be build with release builds:</p>
 <pre class="literal-block">
-make BUILD=release
+make BENCHMARK=off
 </pre>
 </div>
 <div class="section" id="compilers">
@@ -435,8 +494,23 @@ make BUILD=release
 both configuration can be chosen via <tt class="docutils literal"><span class="pre">CONFIG=linux-gcc</span></tt> or
 <tt class="docutils literal"><span class="pre">CONFIG=linux-intel</span></tt>.</p>
 </div>
+<div class="section" id="cleaning">
+<h2><a class="toc-backref" href="#id7">1.5&nbsp;&nbsp;&nbsp;Cleaning</a></h2>
+<p>For each configuration and build (debug/release) a subdirectory under the
+<tt class="docutils literal">src/obj</tt> directory is created where the dependency and object files are
+stored.
+With</p>
+<pre class="literal-block">
+make CONFIG=... BUILD=... clean
+</pre>
+<p>a specific combination is select and cleaned, whereas with</p>
+<pre class="literal-block">
+make clean-all
+</pre>
+<p>all object and dependency files are deleted.</p>
+</div>
 <div class="section" id="options-summary">
-<h2><a class="toc-backref" href="#id7">1.5&nbsp;&nbsp;&nbsp;Options Summary</a></h2>
+<h2><a class="toc-backref" href="#id8">1.6&nbsp;&nbsp;&nbsp;Options Summary</a></h2>
 <p>Options that can be specified when building the framework with make:</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -451,19 +525,14 @@ both configuration can be chosen via <tt class="docutils literal"><span class="p
 <td>default</td>
 <td>description</td>
 </tr>
-<tr><td>TARCH</td>
-<td>--</td>
-<td>--</td>
-<td>Via TARCH the architecture the compiler generates code for can be overriden. The value depends on the chose compiler.</td>
-</tr>
 <tr><td>BENCHMARK</td>
 <td>on, off</td>
-<td>off</td>
-<td>If enabled, disables VERIFICATION, STATISTICS, VTK_OUTPUT.</td>
+<td>on</td>
+<td>If enabled, disables VERIFICATION, STATISTICS, VTK_OUTPUT. If disabled enables the three former options.</td>
 </tr>
 <tr><td>BUILD</td>
 <td>debug, release</td>
-<td>debug</td>
+<td>release</td>
 <td>No optimization, debug symbols, DEBUG defined.</td>
 </tr>
 <tr><td>CONFIG</td>
@@ -486,6 +555,11 @@ both configuration can be chosen via <tt class="docutils literal"><span class="p
 <td>off</td>
 <td>View statistics, like density etc, during simulation.</td>
 </tr>
+<tr><td>TARCH</td>
+<td>--</td>
+<td>--</td>
+<td>Via TARCH the architecture the compiler generates code for can be overridden. The value depends on the chosen compiler.</td>
+</tr>
 <tr><td>VERIFICATION</td>
 <td>on, off</td>
 <td>off</td>
@@ -501,16 +575,18 @@ both configuration can be chosen via <tt class="docutils literal"><span class="p
 </div>
 </div>
 <div class="section" id="invocation">
-<h1><a class="toc-backref" href="#id8">2&nbsp;&nbsp;&nbsp;Invocation</a></h1>
+<h1><a class="toc-backref" href="#id9">2&nbsp;&nbsp;&nbsp;Invocation</a></h1>
 <p>Running the binary will print among the GPL licence header a line like the following:</p>
-<blockquote>
-LBM Benchmark Kernels 0.1, compiled Jul  5 2017 21:59:22, type: verification</blockquote>
+<pre class="literal-block">
+LBM Benchmark Kernels 0.1, compiled Jul  5 2017 21:59:22, type: verification
+</pre>
 <p>if verfication was enabled during compilation or</p>
-<blockquote>
-LBM Benchmark Kernels 0.1, compiled Jul  5 2017 21:59:22, type: benchmark</blockquote>
+<pre class="literal-block">
+LBM Benchmark Kernels 0.1, compiled Jul  5 2017 21:59:22, type: benchmark
+</pre>
 <p>if verfication was disabled during compilation.</p>
 <div class="section" id="command-line-parameters">
-<h2><a class="toc-backref" href="#id9">2.1&nbsp;&nbsp;&nbsp;Command Line Parameters</a></h2>
+<h2><a class="toc-backref" href="#id10">2.1&nbsp;&nbsp;&nbsp;Command Line Parameters</a></h2>
 <p>Running the binary with <tt class="docutils literal"><span class="pre">-h</span></tt> list all available parameters:</p>
 <pre class="literal-block">
 Usage:
@@ -540,7 +616,7 @@ $ bin/lbmbenchk-linux-intel-release -verfiy -dims 32x32x32
 <p>Kernel specific parameters can be opatained via selecting the specific kernel
 and passing <tt class="docutils literal"><span class="pre">-h</span></tt> as parameter:</p>
 <pre class="literal-block">
-$ bin/lbmbenchk-linux-intel-release -kernel -- -h
+$ bin/lbmbenchk-linux-intel-release -kernel kernel-name -- -h
 ...
 Kernel parameters:
 [-blk &lt;n&gt;] [-blk-[xyz] &lt;n&gt;]
@@ -574,14 +650,225 @@ Available kernels to benchmark:
    blk-pull-aos
 </pre>
 </div>
+<div class="section" id="kernels">
+<h2><a class="toc-backref" href="#id11">2.2&nbsp;&nbsp;&nbsp;Kernels</a></h2>
+<p>The following list shortly describes available kernels:</p>
+<ul class="simple">
+<li>push-soa/push-aos/pull-soa/pull-aos:
+Unoptimized kernels (but stream/collide are already fused) using two grids as
+source and destination. Implement push/pull semantics as well structure of
+arrays (soa) or array of structures (aos) layout.</li>
+<li>blk-push-soa/blk-push-aos/blk-pull-soa/blk-pull-aos:
+The same as the unoptimized kernels without the blk prefix, except that they support
+spatial blocking, i.e. loop blocking of the three loops used to iterate over
+the lattice. Here manual work sharing for OpenMP is used.</li>
+<li>list-push-soa/list-push-aos/list-pull-soa/list-pull-aos:
+The same as the unoptimized kernels without the list prefix, but for indirect addressing.
+Here only a 1D vector of is used to store the fluid nodes, omitting the
+obstacles. An adjacency list is used to recover the neighborhood associations.</li>
+<li>list-pull-split-nt-1s-soa/list-pull-split-nt-2s-soa:
+Optimized variant of list-pull-soa. Chunks of the lattice are processed as
+once. Postcollision values are written back via nontemporal stores in 18 (1s)
+or 9 (2s) loops.</li>
+<li>list-aa-aos/list-aa-soa:
+Unoptimized implementation of the AA pattern for the 1D vector with adjacency
+list. Supported are array of structures (aos) and structure of arrays (soa)
+data layout is supported.</li>
+<li>list-aa-ria-soa:
+Implementation of AA pattern with intrinsics for the 1D vector with adjacency
+list. Furthermore it contains a vectorized even time step and run length
+coding to reduce the loop balance of the odd time step.</li>
+<li>list-aa-pv-soa:
+All optimizations of list-aa-ria-soa. Additional with partial vectorization
+of the odd time step.</li>
+</ul>
+<p>Note that all array of structures (aos) kernels might require blocking
+(depending on the domain size) to reach the performance of their structure of
+arrays (soa) counter parts.</p>
+<p>The following table summarizes the properties of the kernels. Here <strong>D</strong> means
+direct addressing, i.e. full array, <strong>I</strong> means indirect addressing, i.e. 1D
+vector with adjacency list, <strong>x</strong> means supported, whereas <strong>--</strong> means unsupported.
+The loop balance B_l is computed for D3Q19 model with double precision floating
+point for PDFs (8 byte) and 4 byte integers for the index (adjacency list).
+As list-aa-ria-soa and list-aa-pv-soa support run length coding their effective
+loop balance depends on the geometry. The effective loop balance is printed
+during each run.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="29%" />
+<col width="14%" />
+<col width="14%" />
+<col width="6%" />
+<col width="10%" />
+<col width="10%" />
+<col width="16%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">kernel name</th>
+<th class="head">prop. step</th>
+<th class="head">data layout</th>
+<th class="head">addr.</th>
+<th class="head">parallel</th>
+<th class="head">blocking</th>
+<th class="head">B_l [B/FLUP]</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>push-soa</td>
+<td>OS</td>
+<td>SoA</td>
+<td>D</td>
+<td>x</td>
+<td>--</td>
+<td>456</td>
+</tr>
+<tr><td>push-aos</td>
+<td>OS</td>
+<td>AoS</td>
+<td>D</td>
+<td>x</td>
+<td>--</td>
+<td>456</td>
+</tr>
+<tr><td>pull-soa</td>
+<td>OS</td>
+<td>SoA</td>
+<td>D</td>
+<td>x</td>
+<td>--</td>
+<td>456</td>
+</tr>
+<tr><td>pull-aos</td>
+<td>OS</td>
+<td>AoS</td>
+<td>D</td>
+<td>x</td>
+<td>--</td>
+<td>456</td>
+</tr>
+<tr><td>blk-push-soa</td>
+<td>OS</td>
+<td>SoA</td>
+<td>D</td>
+<td>x</td>
+<td>x</td>
+<td>456</td>
+</tr>
+<tr><td>blk-push-aos</td>
+<td>OS</td>
+<td>AoS</td>
+<td>D</td>
+<td>x</td>
+<td>x</td>
+<td>456</td>
+</tr>
+<tr><td>blk-pull-soa</td>
+<td>OS</td>
+<td>SoA</td>
+<td>D</td>
+<td>x</td>
+<td>x</td>
+<td>456</td>
+</tr>
+<tr><td>blk-pull-aos</td>
+<td>OS</td>
+<td>AoS</td>
+<td>D</td>
+<td>x</td>
+<td>x</td>
+<td>456</td>
+</tr>
+<tr><td>list-push-soa</td>
+<td>OS</td>
+<td>SoA</td>
+<td>I</td>
+<td>x</td>
+<td>x</td>
+<td>528</td>
+</tr>
+<tr><td>list-push-aos</td>
+<td>OS</td>
+<td>AoS</td>
+<td>I</td>
+<td>x</td>
+<td>x</td>
+<td>528</td>
+</tr>
+<tr><td>list-pull-soa</td>
+<td>OS</td>
+<td>SoA</td>
+<td>I</td>
+<td>x</td>
+<td>x</td>
+<td>528</td>
+</tr>
+<tr><td>list-pull-aos</td>
+<td>OS</td>
+<td>AoS</td>
+<td>I</td>
+<td>x</td>
+<td>x</td>
+<td>528</td>
+</tr>
+<tr><td>list-pull-split-nt-1s</td>
+<td>OS</td>
+<td>SoA</td>
+<td>I</td>
+<td>x</td>
+<td>x</td>
+<td>376</td>
+</tr>
+<tr><td>list-pull-split-nt-2s</td>
+<td>OS</td>
+<td>SoA</td>
+<td>I</td>
+<td>x</td>
+<td>x</td>
+<td>376</td>
+</tr>
+<tr><td>list-aa-soa</td>
+<td>AA</td>
+<td>SoA</td>
+<td>I</td>
+<td>x</td>
+<td>x</td>
+<td>340</td>
+</tr>
+<tr><td>list-aa-aos</td>
+<td>AA</td>
+<td>AoS</td>
+<td>I</td>
+<td>x</td>
+<td>x</td>
+<td>340</td>
+</tr>
+<tr><td>list-aa-ria-soa</td>
+<td>AA</td>
+<td>SoA</td>
+<td>I</td>
+<td>x</td>
+<td>x</td>
+<td>304-342</td>
+</tr>
+<tr><td>list-aa-pv-soa</td>
+<td>AA</td>
+<td>SoA</td>
+<td>I</td>
+<td>x</td>
+<td>x</td>
+<td>304-342</td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 <div class="section" id="id1">
-<h1><a class="toc-backref" href="#id10">3&nbsp;&nbsp;&nbsp;Benchmarking</a></h1>
+<h1><a class="toc-backref" href="#id12">3&nbsp;&nbsp;&nbsp;Benchmarking</a></h1>
 <p>Correct benchmarking is a nontrivial task. Whenever benchmark results should be
 created make sure the binary was compiled with:</p>
 <ul class="simple">
-<li><tt class="docutils literal">BENCHMARK=on</tt> and</li>
-<li><tt class="docutils literal">BUILD=release</tt> and</li>
+<li><tt class="docutils literal">BENCHMARK=on</tt> (default if not overriden) and</li>
+<li><tt class="docutils literal">BUILD=release</tt> (default if not overriden) and</li>
 <li>the correct ISA for macros is used, selected via <tt class="docutils literal">ISA</tt> and</li>
 <li>use <tt class="docutils literal">TARCH</tt> to specify the architecture the compiler generates code for.</li>
 </ul>
@@ -594,7 +881,13 @@ $ bin/lbmbenchk-linux-intel-release ... -t 10 -pin $(seq -s , 0 9)
 <ul class="simple">
 <li>transparent huge pages: when allocating memory small 4 KiB pages might be
 replaced with larger ones. This is in general a good thing, but if this is
-really the case, depends on the system settings.</li>
+really the case, depends on the system settings (check e.g. the status of
+<tt class="docutils literal">/sys/kernel/mm/transparent_hugepage/enabled</tt>).
+Currently <tt class="docutils literal">madvise(MADV_HUGEPAGE)</tt> is used for allocations which are aligned to
+a 4 KiB page, which should be the case for the lattices.
+This should result in huge pages except THP is disabled on the machine.
+(NOTE: madvise() is used if <tt class="docutils literal">HAVE_HUGE_PAGES</tt> is defined, which is currently
+hard coded defined in <tt class="docutils literal">Memory.c</tt>).</li>
 <li>CPU/core frequency: For reproducible results the frequency of all cores
 should be fixed.</li>
 <li>NUMA placement policy: The benchmark assumes a first touch policy, which
@@ -604,19 +897,63 @@ used is already full memory might be allocated in a remote domain. Accesses
 to remote domains typically have a higher latency and lower bandwidth.</li>
 <li>System load: interference with other application, espcially on desktop
 systems should be avoided.</li>
-<li>Padding: most kernels do not care about padding against cache or TLB
-thrashing. Even if the number of (fluid) nodes suggest everything is fine,
-through parallelization still problems might occur.</li>
+<li>Padding: For SoA based kernels the number of (fluid) nodes is automatically
+adjusted so that no cache or TLB thrashing should occur. The parameters are
+optimized for current Intel based systems. For more details look into the
+padding section.</li>
 <li>CPU dispatcher function: the compiler might add different versions of a
 function for different ISA extensions. Make sure the code you might think is
 executed is actually the code which is executed.</li>
 </ul>
+<div class="section" id="padding">
+<h2><a class="toc-backref" href="#id13">3.1&nbsp;&nbsp;&nbsp;Padding</a></h2>
+<p>With correct padding cache and TLB thrashing can be avoided. Therefore the
+number of (fluid) nodes used in the data layout is artificially increased.</p>
+<p>Currently automatic padding is active for kernels which support it. It can be
+controlled via the kernel parameter (i.e. parameter after the <tt class="docutils literal"><span class="pre">--</span></tt>)
+<tt class="docutils literal"><span class="pre">-pad</span></tt>. Supported values are <tt class="docutils literal">auto</tt> (default), <tt class="docutils literal">no</tt> (to disable padding),
+or a manual padding.</p>
+<p>Automatic padding tries to avoid cache and TLB thrashing and pads for a 32
+entry (huge pages) TLB with 8 sets and a 512 set (L2) cache. This reflects the
+parameters of current Intel based processors.</p>
+<p>Manual padding is done via a padding string and has the format
+<tt class="docutils literal"><span class="pre">mod_1+offset_1(,mod_n+offset_n)</span></tt>, which specifies numbers of bytes.
+SoA data layouts can exhibit TLB thrashing. Therefore we want to distribute the
+19 pages with one lattice (36 with two lattices) we are concurrently accessing
+over as much sets in the TLB as possible.
+This is controlled by the distance between the accessed pages, which is the
+number of (fluid) nodes in between them and can be adjusted by adding further
+(fluid) nodes.
+We want the distance d (in bytes) between two accessed pages to be e.g.
+<strong>d % (PAGE_SIZE * TLB_SETS) = PAGE_SIZE</strong>.
+This would distribute the pages evenly over the sets. Hereby <strong>PAGE_SIZE * TLB_SETS</strong>
+would be our <tt class="docutils literal">mod_1</tt> and <strong>PAGE_SIZE</strong> (after the =) our <tt class="docutils literal">offset_1</tt>.
+Measurements show that with only a quarter of half of a page size as offset
+higher performance is achieved, which is done by automatic padding.
+On top of this padding more paddings can be added. They are just added to the
+padding string and are separated by commas.</p>
+<p>A zero modulus in the padding string has a special meaning. Here the
+corresponding offset is just added to the number of nodes. A padding string
+like <tt class="docutils literal"><span class="pre">-pad</span> 0+16</tt> would at a static padding of two nodes (one node = 8 b).</p>
+</div>
+</div>
+<div class="section" id="geometries">
+<h1><a class="toc-backref" href="#id14">4&nbsp;&nbsp;&nbsp;Geometries</a></h1>
+<p>TODO: supported geometries: channel, pipe, blocks</p>
+</div>
+<div class="section" id="results">
+<h1><a class="toc-backref" href="#id15">5&nbsp;&nbsp;&nbsp;Results</a></h1>
+<p>TODO</p>
+</div>
+<div class="section" id="licence">
+<h1><a class="toc-backref" href="#id16">6&nbsp;&nbsp;&nbsp;Licence</a></h1>
+<p>The Lattice Boltzmann Benchmark Kernels are licensed under GPLv3.</p>
 </div>
 <div class="section" id="acknowledgements">
-<h1><a class="toc-backref" href="#id11">4&nbsp;&nbsp;&nbsp;Acknowledgements</a></h1>
+<h1><a class="toc-backref" href="#id17">7&nbsp;&nbsp;&nbsp;Acknowledgements</a></h1>
 <p>This work was funded by BMBF, grant no. 01IH15003A (project SKAMPY).</p>
 <p>This work was funded by KONWHIR project OMI4PAPS.</p>
-<p>Document was generated at 2017-10-26 09:43.</p>
+<p>Document was generated at 2017-11-02 15:33.</p>
 </div>
 </div>
 </body>

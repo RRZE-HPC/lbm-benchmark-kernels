@@ -29,7 +29,9 @@
 # CONFIG ?= linux-gcc
 CONFIG ?= linux-intel
 
-BUILD ?= debug
+BUILD ?= release
+
+BENCHMARK ?= on
 
 # If we compile for BENCHMARK all verifcation and statistics are disabled,
 # if not specified otherwise.
@@ -37,13 +39,12 @@ ifeq (on,$(BENCHMARK))
   VERIFICATION ?= off
   VTK_OUTPUT   ?= off
   STATISTICS   ?= off
+else
+  VERIFICATION ?= on
+  STATISTICS   ?= on
+  VTK_OUTPUT   ?= on
 endif
 
-VERIFICATION ?= on
-
-STATISTICS ?= on
-
-VTK_OUTPUT ?= on
 
 COLOR ?= on
 
@@ -95,7 +96,7 @@ DEP_DIR         = obj/$(CONFIG)-$(BUILD)$(TAG)-dep
 
 # Sources to consider.
 SOURCES_C = Main.c Memory.c Geometry.c Kernel.c \
-            Vtk.c Pinning.c
+            Vtk.c Pinning.c Padding.c Lattice.c
 
 # ------------------------------------------------------------------------
 # NO CHANGE BELOW SHOULD BE NEEDED
@@ -127,7 +128,13 @@ OBJ_C = $(foreach SOURCE,$(SOURCES_C),$(OBJECT_DIR)/$(SOURCE:%.c=%.o)) \
 		$(OBJECT_DIR)/BenchKernelD3Q19ListAaPv_PushSoA.o \
 		$(OBJECT_DIR)/BenchKernelD3Q19ListAaPvCommon_PushSoA.o \
 		$(OBJECT_DIR)/BenchKernelD3Q19ListPullSplitNt_PullSoA.o \
-		$(OBJECT_DIR)/BenchKernelD3Q19ListPullSplitNtCommon_PullSoA.o
+		$(OBJECT_DIR)/BenchKernelD3Q19ListPullSplitNtCommon_PullSoA.o \
+		$(OBJECT_DIR)/BenchKernelD3Q19Aa_AaAoS.o \
+		$(OBJECT_DIR)/BenchKernelD3Q19AaCommon_AaAoS.o \
+		$(OBJECT_DIR)/BenchKernelD3Q19Aa_AaSoA.o \
+		$(OBJECT_DIR)/BenchKernelD3Q19AaCommon_AaSoA.o \
+		$(OBJECT_DIR)/BenchKernelD3Q19AaVec_AaSoA.o \
+		$(OBJECT_DIR)/BenchKernelD3Q19AaVecCommon_AaSoA.o
 
 OBJ = $(OBJ_C)
 
@@ -203,9 +210,22 @@ ifeq (on,$(LIKWID))
   LD_LIBS  += $(LIKWID_LIB) -llikwid
 endif
 
+# ARCH can only be assigned a string without a space. The space is escaped as
+# a comma which we have to replace here.
+
+ifdef TARCH
+  ARCH_W_COMMA := $(TARCH)
+
+  COMMA_ := ,
+  override TARCH := $(subst $(COMMA_), ,$(TARCH))
+
+  $(info $(shell echo -e "\n$(COLOR_GREEN)INFO: Automatically expanding comma in TARCH variable:  TARCH=$(TARCH).$(COLOR_NO)\n"))
+
+endif
+
 .phony: all clean clean-all
 
-$(info $(shell $(ECHO_E) "# Configuration:   CONFIG=$(COLOR_CYAN)$(CONFIG)$(COLOR_NO)   BUILD=$(COLOR_CYAN)$(BUILD)$(COLOR_NO)   VERIFICATION=$(COLOR_CYAN)$(VERIFICATION)$(COLOR_NO)   STATISTICS=$(COLOR_CYAN)$(STATISTICS)$(COLOR_NO)   VTK_OUTPUT=$(COLOR_CYAN)$(VTK_OUTPUT)$(COLOR_NO)  OPENMP=$(COLOR_CYAN)$(OPENMP)$(COLOR_NO)   ISA=$(COLOR_CYAN)$(ISA)$(COLOR_NO)   LIKWID=$(COLOR_CYAN)$(LIKWID)$(COLOR_NO)   building $(.DEFAULT_GOAL)..."))
+$(info $(shell $(ECHO_E) "# Configuration:   CONFIG=$(COLOR_CYAN)$(CONFIG)$(COLOR_NO)   BUILD=$(COLOR_CYAN)$(BUILD)$(COLOR_NO)   VERIFICATION=$(COLOR_CYAN)$(VERIFICATION)$(COLOR_NO)   STATISTICS=$(COLOR_CYAN)$(STATISTICS)$(COLOR_NO)   VTK_OUTPUT=$(COLOR_CYAN)$(VTK_OUTPUT)$(COLOR_NO)  OPENMP=$(COLOR_CYAN)$(OPENMP)$(COLOR_NO)   ISA=$(COLOR_CYAN)$(ISA)$(COLOR_NO)   LIKWID=$(COLOR_CYAN)$(LIKWID)$(COLOR_NO)   TARCH=$(COLOR_CYAN)$(TARCH)$(COLOR_NO)   building $(.DEFAULT_GOAL)..."))
 
 
 $(info # Object dir:      $(OBJECT_DIR))
@@ -265,6 +285,13 @@ $(OBJECT_DIR)/%_AoS.o: %.c $(REBUILD_DEPS)
 	@$(ECHO_E) "compiling: $(COLOR_CYAN)$@$(COLOR_NO)    $(COLOR_MAGENTA)DATA_LAYOUT_AOS$(COLOR_NO)"
 	$(CC) $(strip $(C_FLAGS)) $(strip $(PP_FLAGS)) $(D)DATA_LAYOUT_AOS -c $< -o $@
 
+$(OBJECT_DIR)/%_AaAoS.o: %.c $(REBUILD_DEPS)
+	@$(ECHO_E) "compiling: $(COLOR_CYAN)$@$(COLOR_NO)    $(COLOR_MAGENTA)DATA_LAYOUT_AOS$(COLOR_NO) $(COLOR_MAGENTA)PROP_MODEL_AA$(COLOR_NO)"
+	$(CC) $(strip $(C_FLAGS)) $(strip $(PP_FLAGS)) $(D)DATA_LAYOUT_AOS $(D)PROP_MODEL_AA -c $< -o $@
+
+$(OBJECT_DIR)/%_AaSoA.o: %.c $(REBUILD_DEPS)
+	@$(ECHO_E) "compiling: $(COLOR_CYAN)$@$(COLOR_NO)    $(COLOR_MAGENTA)DATA_LAYOUT_SOA$(COLOR_NO) $(COLOR_MAGENTA)PROP_MODEL_AA$(COLOR_NO)"
+	$(CC) $(strip $(C_FLAGS)) $(strip $(PP_FLAGS)) $(D)DATA_LAYOUT_SOA $(D)PROP_MODEL_AA -c $< -o $@
 
 $(OBJECT_DIR)/%.o: %.c $(REBUILD_DEPS)
 	@$(ECHO_E) "compiling: $(COLOR_CYAN)$@$(COLOR_NO)"

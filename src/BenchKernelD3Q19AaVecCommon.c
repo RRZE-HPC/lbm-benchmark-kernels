@@ -24,10 +24,11 @@
 //  along with LbmBenchKernels.  If not, see <http://www.gnu.org/licenses/>.
 //
 // --------------------------------------------------------------------------
-#include "BenchKernelD3Q19Common.h"
+#include "BenchKernelD3Q19AaVecCommon.h"
 
 #include "Memory.h"
 #include "Vtk.h"
+#include "Vector.h"
 
 #include <inttypes.h>
 #include <math.h>
@@ -37,10 +38,7 @@
 #endif
 
 // Forward definition.
-void FNAME(D3Q19Kernel)(LatticeDesc * ld, struct KernelData_ * kd, CaseData * cd);
-
-void FNAME(D3Q19BlkKernel)(LatticeDesc * ld, struct KernelData_ * kd, CaseData * cd);
-
+void FNAME(D3Q19AaVecKernel)(LatticeDesc * ld, struct KernelData_ * kd, CaseData * cd);
 
 
 static void FNAME(BcGetPdf)(KernelData * kd, int x, int y, int z, int dir, PdfT * pdf)
@@ -50,32 +48,36 @@ static void FNAME(BcGetPdf)(KernelData * kd, int x, int y, int z, int dir, PdfT 
 	Assert(kd->PdfsActive == kd->Pdfs[0] || kd->PdfsActive == kd->Pdfs[1]);
 	Assert(pdf != NULL);
 
-	Assert(x >= 0);
-	Assert(y >= 0);
-	Assert(z >= 0);
-	Assert(x < kd->Dims[0]);
-	Assert(y < kd->Dims[1]);
-	Assert(z < kd->Dims[2]);
-	Assert(dir >= 0);
-	Assert(dir < N_D3Q19);
+	Assert(x >= 0); Assert(y >= 0); Assert(z >= 0);
+	Assert(x < kd->Dims[0]); Assert(y < kd->Dims[1]); Assert(z < kd->Dims[2]);
+	Assert(dir >= 0); Assert(dir < N_D3Q19);
+
+	KernelDataAa * kda = KDA(kd);
 
 	int oX = kd->Offsets[0];
 	int oY = kd->Offsets[1];
 	int oZ = kd->Offsets[2];
 
-#ifdef PROP_MODEL_PUSH
-	int nx = x;
-	int ny = y;
-	int nz = z;
-#elif PROP_MODEL_PULL
-	int nx = x - D3Q19_X[dir];
-	int ny = y - D3Q19_Y[dir];
-	int nz = z - D3Q19_Z[dir];
-#endif
+	if (kda->Iteration % 2 == 0) {
+		// Pdfs are stored inverse, local PDFs are located in remote nodes
+		int nx = x - D3Q19_X[dir];
+		int ny = y - D3Q19_Y[dir];
+		int nz = z - D3Q19_Z[dir];
 
-	#define I(x, y, z, dir) P_INDEX_5(kd->GlobalDims, (x), (y), (z), (dir))
-	*pdf = kd->PdfsActive[I(nx + oX, ny + oY, nz + oZ, dir)];
-	#undef I
+		#define I(x, y, z, dir) P_INDEX_5(kd->GlobalDims, (x), (y), (z), (dir))
+		*pdf = kd->PdfsActive[I(nx + oX, ny + oY, nz + oZ, D3Q19_INV[dir])];
+		#undef I
+	}
+	else {
+		int nx = x;
+		int ny = y;
+		int nz = z;
+
+		#define I(x, y, z, dir) P_INDEX_5(kd->GlobalDims, (x), (y), (z), (dir))
+		*pdf = kd->PdfsActive[I(nx + oX, ny + oY, nz + oZ, dir)];
+		#undef I
+	}
+
 
 	return;
 }
@@ -85,33 +87,36 @@ static void FNAME(BcSetPdf)(KernelData * kd, int x, int y, int z, int dir, PdfT 
 	Assert(kd != NULL);
 	Assert(kd->PdfsActive != NULL);
 	Assert(kd->PdfsActive == kd->Pdfs[0] || kd->PdfsActive == kd->Pdfs[1]);
-	Assert(x >= 0);
-	Assert(y >= 0);
-	Assert(z >= 0);
-	Assert(x < kd->Dims[0]);
-	Assert(y < kd->Dims[1]);
-	Assert(z < kd->Dims[2]);
-	Assert(dir >= 0);
-	Assert(dir < N_D3Q19);
+
+	Assert(x >= 0); Assert(y >= 0); Assert(z >= 0);
+	Assert(x < kd->Dims[0]); Assert(y < kd->Dims[1]); Assert(z < kd->Dims[2]);
+	Assert(dir >= 0); Assert(dir < N_D3Q19);
+
+	KernelDataAa * kda = KDA(kd);
 
 	int oX = kd->Offsets[0];
 	int oY = kd->Offsets[1];
 	int oZ = kd->Offsets[2];
 
-#ifdef PROP_MODEL_PUSH
-	int nx = x;
-	int ny = y;
-	int nz = z;
-#elif PROP_MODEL_PULL
-	int nx = x - D3Q19_X[dir];
-	int ny = y - D3Q19_Y[dir];
-	int nz = z - D3Q19_Z[dir];
-#endif
+	if (kda->Iteration % 2 == 0) {
+		// Pdfs are stored inverse, local PDFs are located in remote nodes
+		int nx = x - D3Q19_X[dir];
+		int ny = y - D3Q19_Y[dir];
+		int nz = z - D3Q19_Z[dir];
 
-	#define I(x, y, z, dir) P_INDEX_5(kd->GlobalDims, (x), (y), (z), (dir))
-	kd->PdfsActive[I(nx + oX, ny + oY, nz + oZ, dir)] = pdf;
-	#undef I
+		#define I(x, y, z, dir) P_INDEX_5(kd->GlobalDims, (x), (y), (z), (dir))
+		pdf = kd->PdfsActive[I(nx + oX, ny + oY, nz + oZ, D3Q19_INV[dir])] = pdf;
+		#undef I
+	}
+	else {
+		int nx = x;
+		int ny = y;
+		int nz = z;
 
+		#define I(x, y, z, dir) P_INDEX_5(kd->GlobalDims, (x), (y), (z), (dir))
+		kd->PdfsActive[I(nx + oX, ny + oY, nz + oZ, dir)] = pdf;
+		#undef I
+	}
 
 	return;
 }
@@ -123,27 +128,34 @@ static void FNAME(GetNode)(KernelData * kd, int x, int y, int z, PdfT * pdfs)
 	Assert(kd->PdfsActive != NULL);
 	Assert(kd->PdfsActive == kd->Pdfs[0] || kd->PdfsActive == kd->Pdfs[1]);
 	Assert(pdfs != NULL);
-	Assert(x >= 0);
-	Assert(y >= 0);
-	Assert(z >= 0);
-	Assert(x < kd->Dims[0]);
-	Assert(y < kd->Dims[1]);
-	Assert(z < kd->Dims[2]);
+
+	Assert(x >= 0); Assert(y >= 0); Assert(z >= 0);
+	Assert(x < kd->Dims[0]); Assert(y < kd->Dims[1]); Assert(z < kd->Dims[2]);
+
+	KernelDataAa * kda = KDA(kd);
 
 	int oX = kd->Offsets[0];
 	int oY = kd->Offsets[1];
 	int oZ = kd->Offsets[2];
 
 
-	#define I(x, y, z, dir) P_INDEX_5(kd->GlobalDims, (x), (y), (z), (dir))
-#ifdef PROP_MODEL_PUSH
-	#define X(name, idx, idxinv, _x, _y, _z)	pdfs[idx] = kd->PdfsActive[I(x + oX, y + oY, z + oZ, idx)];
-#elif PROP_MODEL_PULL
-	#define X(name, idx, idxinv, _x, _y, _z)	pdfs[idx] = kd->PdfsActive[I(x + oX - (_x), y + oY - (_y), z + oZ - (_z), idx)];
-#endif
-	D3Q19_LIST
-	#undef X
-	#undef I
+	if (kda->Iteration % 2 == 0) {
+		// Pdfs are stored inverse, local PDFs are located in remote nodes
+
+		#define I(x, y, z, dir) P_INDEX_5(kd->GlobalDims, (x), (y), (z), (dir))
+		#define X(name, idx, idxinv, _x, _y, _z)	pdfs[idx] = kd->PdfsActive[I(x + oX - _x, y + oY - _y, z + oZ - _z, D3Q19_INV[idx])];
+		D3Q19_LIST
+		#undef X
+		#undef I
+	}
+	else {
+		#define I(x, y, z, dir) P_INDEX_5(kd->GlobalDims, (x), (y), (z), (dir))
+		#define X(name, idx, idxinv, _x, _y, _z)	pdfs[idx] = kd->PdfsActive[I(x + oX, y + oY, z + oZ, idx)];
+		D3Q19_LIST
+		#undef X
+		#undef I
+
+	}
 
 #if 0		// DETECT NANs
 
@@ -172,27 +184,31 @@ static void FNAME(SetNode)(KernelData * kd, int x, int y, int z, PdfT * pdfs)
 	Assert(kd->PdfsActive == kd->Pdfs[0] || kd->PdfsActive == kd->Pdfs[1]);
 	Assert(pdfs != NULL);
 
-	Assert(x >= 0);
-	Assert(y >= 0);
-	Assert(z >= 0);
-	Assert(x < kd->Dims[0]);
-	Assert(y < kd->Dims[1]);
-	Assert(z < kd->Dims[2]);
+	Assert(x >= 0); Assert(y >= 0); Assert(z >= 0);
+	Assert(x < kd->Dims[0]); Assert(y < kd->Dims[1]); Assert(z < kd->Dims[2]);
+
+	KernelDataAa * kda = KDA(kd);
 
 	int oX = kd->Offsets[0];
 	int oY = kd->Offsets[1];
 	int oZ = kd->Offsets[2];
 
-	#define I(x, y, z, dir) P_INDEX_5(kd->GlobalDims, (x), (y), (z), (dir))
-#ifdef PROP_MODEL_PUSH
-	#define X(name, idx, idxinv, _x, _y, _z)	kd->PdfsActive[I(x + oX, y + oY, z + oZ, idx)] = pdfs[idx];
-#elif PROP_MODEL_PULL
-	#define X(name, idx, idxinv, _x, _y, _z)	kd->PdfsActive[I(x + oX - (_x), y + oY - (_y), z + oZ - (_z), idx)] = pdfs[idx];
-#endif
-	D3Q19_LIST
-	#undef X
-	#undef I
+	if (kda->Iteration % 2 == 0) {
+		// Pdfs are stored inverse, local PDFs are located in remote nodes
 
+		#define I(x, y, z, dir) P_INDEX_5(kd->GlobalDims, (x), (y), (z), (dir))
+		#define X(name, idx, idxinv, _x, _y, _z)	kd->PdfsActive[I(x + oX - _x, y + oY - _y, z + oZ - _z, D3Q19_INV[idx])] = pdfs[idx];
+		D3Q19_LIST
+		#undef X
+		#undef I
+	}
+	else {
+		#define I(x, y, z, dir) P_INDEX_5(kd->GlobalDims, (x), (y), (z), (dir))
+		#define X(name, idx, idxinv, _x, _y, _z)	kd->PdfsActive[I(x + oX, y + oY, z + oZ, idx)] = pdfs[idx];
+		D3Q19_LIST
+		#undef X
+		#undef I
+	}
 	return;
 }
 
@@ -288,14 +304,15 @@ static void ParseParameters(Parameters * params, int * blk)
 }
 
 
-static void D3Q19InternalInit(int blocking, LatticeDesc * ld, KernelData ** kernelData, Parameters * params)
+void FNAME(D3Q19AaVecInit)(LatticeDesc * ld, KernelData ** kernelData, Parameters * params)
 {
-	KernelDataEx * kdex = NULL;
-	MemAlloc((void **)&kdex, sizeof(KernelDataEx));
+	KernelDataAa * kda = NULL;
+	MemAlloc((void **)&kda, sizeof(KernelDataAa));
 
-	kdex->Blk[0] = 0; kdex->Blk[1] = 0; kdex->Blk[2] = 0;
+	kda->Blk[0] = 0; kda->Blk[1] = 0; kda->Blk[2] = 0;
+	kda->Iteration = -1;
 
-	KernelData * kd = &kdex->kd;
+	KernelData * kd = &kda->kd;
 	*kernelData = kd;
 
 	kd->nObstIndices = ld->nObst;
@@ -309,9 +326,13 @@ static void D3Q19InternalInit(int blocking, LatticeDesc * ld, KernelData ** kern
 	int * lDims = ld->Dims;
 	int * gDims = kd->GlobalDims;
 
+	Assert(VSIZE <= 4);
+
+	// TODO: only add enough ghost cells so we can compute everything vectorized.
 	gDims[0] = lDims[0] + 2;
 	gDims[1] = lDims[1] + 2;
-	gDims[2] = lDims[2] + 2;
+	// TODO: fix this for aa-vec2-soa
+	gDims[2] = lDims[2] + 4; // one ghost cell in front, one in the back, plus at most two at the back for VSIZE = 4
 
 	kd->Offsets[0] = 1;
 	kd->Offsets[1] = 1;
@@ -333,19 +354,14 @@ static void D3Q19InternalInit(int blocking, LatticeDesc * ld, KernelData ** kern
 
 	int nCells = gX * gY * gZ;
 
-	PdfT * pdfs[2];
+	PdfT * pdfs[2] = { NULL, NULL };
 
-	if (blocking) {
-		ParseParameters(params, blk);
-	}
-	else {
-		if (params->nKernelArgs != 0) {
-			printf("ERROR: unknown kernel parameter.\n");
-			printf("This kernels accepts no parameters.\n");
-			exit(1);
-		}
-	}
+	ParseParameters(params, blk);
 
+	if (blk[2] % VSIZE != 0) {
+		blk[2] -= blk[2] % VSIZE;
+		printf("WARNING: blocking factor for z direction must be a multiple of VSIZE = %d, adjusting it to %d.\n", VSIZE, blk[2]);
+	}
 
 	if (blk[0] == 0) blk[0] = gX;
 	if (blk[1] == 0) blk[1] = gY;
@@ -353,112 +369,84 @@ static void D3Q19InternalInit(int blocking, LatticeDesc * ld, KernelData ** kern
 
 	printf("# blocking x: %3d y: %3d z: %3d\n", blk[0], blk[1], blk[2]);
 
+	kda->Blk[0] = blk[0]; kda->Blk[1] = blk[1]; kda->Blk[2] = blk[2];
 
-	kdex->Blk[0] = blk[0]; kdex->Blk[1] = blk[1]; kdex->Blk[2] = blk[2];
 
+	printf("# allocating data for %d LB nodes with padding (%lu bytes = %f MiB for the single lattice)\n",
+	       nCells,
+		   sizeof(PdfT) * nCells * N_D3Q19,
+	       sizeof(PdfT) * nCells * N_D3Q19 / 1024.0 / 1024.0);
 
-	printf("# allocating data for %d LB nodes with padding (%lu bytes = %f MiB for both lattices)\n",
-	       nCells, 2 * sizeof(PdfT) * nCells * N_D3Q19,
-	       2 * sizeof(PdfT) * nCells * N_D3Q19 / 1024.0 / 1024.0);
+#define PAGE_4K		4096
 
-	// MemAlloc((void **)&pdfs[0], sizeof(PdfT) * nCells * N_D3Q19);
-	// MemAlloc((void **)&pdfs[1], sizeof(PdfT) * nCells * N_D3Q19);
-	MemAllocAligned((void **)&pdfs[0], sizeof(PdfT) * nCells * N_D3Q19, 2 * 1024 * 1024);
-	MemAllocAligned((void **)&pdfs[1], sizeof(PdfT) * nCells * N_D3Q19, 2 * 1024 * 1024);
-
-	printf("# pdfs[0] = %p\n", pdfs[0]);
-	printf("# pdfs[1] = %p\n", pdfs[1]);
+	MemAllocAligned((void **)&pdfs[0], sizeof(PdfT) * nCells * N_D3Q19, PAGE_4K);
 
 	kd->Pdfs[0] = pdfs[0];
-	kd->Pdfs[1] = pdfs[1];
+	kd->Pdfs[1] = NULL;
+
 
 	// Initialize PDFs with some (arbitrary) data for correct NUMA placement.
 	// This depends on the chosen data layout.
 	// The structure of the loop should resemble the same "execution layout"
 	// as in the kernel!
 
-	if (blocking) {
-		int nX = ld->Dims[0];
-		int nY = ld->Dims[1];
-		int nZ = ld->Dims[2];
+	int nThreads;
+#ifdef _OPENMP
+	nThreads = omp_get_max_threads();
+#endif
 
-		int nThreads = 1;
+#ifdef _OPENMP
+	#pragma omp parallel for \
+				shared(gDims, pdfs, \
+				oX, oY, oZ, lX, lY, lZ, blk, nThreads, ld)
+#endif
+	for (int i = 0; i < nThreads; ++i) {
 
-		#ifdef _OPENMP
-		nThreads = omp_get_max_threads();
-		#endif
+		int threadStartX = lX / nThreads * i;
+		int threadEndX   = lX / nThreads * (i + 1);
 
-		#ifdef _OPENMP
-			#pragma omp parallel for default(none) \
-				shared(pdfs, gDims, nX, nY, nZ, oX, oY, oZ, blk, nThreads)
-		#endif
-		for (int i = 0; i < nThreads; ++i) {
-
-			int threadStartX = nX / nThreads * i;
-			int threadEndX   = nX / nThreads * (i + 1);
-
-			if (nX % nThreads > 0) {
-				if (nX % nThreads > i) {
-					threadStartX += i;
-					threadEndX   += i + 1;
-				}
-				else {
-					threadStartX += nX % nThreads;
-					threadEndX   += nX % nThreads;
-				}
+		if (lX % nThreads > 0) {
+			if (lX % nThreads > i) {
+				threadStartX += i;
+				threadEndX   += i + 1;
 			}
-
-			for (int bX = oX + threadStartX; bX < threadEndX + oX; bX += blk[0]) {
-				for (int bY = oY; bY < nY + oY; bY += blk[1]) {
-					for (int bZ = oZ; bZ < nZ + oZ; bZ += blk[2]) {
-
-						int eZ = MIN(bZ + blk[2], nZ + oZ);
-						int eY = MIN(bY + blk[1], nY + oY);
-						int eX = MIN(bX + blk[0], threadEndX + oX);
-
-						for (int x = bX; x < eX; ++x) {
-							for (int y = bY; y < eY; ++y) {
-								for (int z = bZ; z < eZ; ++z) {
-									for (int d = 0; d < N_D3Q19; ++d) {
-										pdfs[0][P_INDEX_5(gDims, x, y, z, d)] = 1.0;
-										pdfs[1][P_INDEX_5(gDims, x, y, z, d)] = 1.0;
-									}
-								}
-							}
-						}
-					}
-				}
+			else {
+				threadStartX += lX % nThreads;
+				threadEndX   += lX % nThreads;
 			}
 		}
 
-	}
-	else {
-		#ifdef _OPENMP
-			#pragma omp parallel for collapse(3)
-		#endif
-		for (int x = 0; x < gX; ++x) {
-			for (int y = 0; y < gY; ++y) {
-				for (int z = 0; z < gZ; ++z) {
-					for (int d = 0; d < N_D3Q19; ++d) {
-						pdfs[0][P_INDEX_5(gDims, x, y, z, d)] = 1.0;
-						pdfs[1][P_INDEX_5(gDims, x, y, z, d)] = 1.0;
-					}
+		for (int bX = oX + threadStartX; bX < threadEndX + oX; bX += blk[0]) {
+		for (int bY = oY; bY < lY + oY; bY += blk[1]) {
+		for (int bZ = oZ; bZ < lZ + oZ; bZ += blk[2]) {
+
+			int eX = MIN(bX + blk[0], threadEndX + oX);
+			int eY = MIN(bY + blk[1], lY + oY);
+			int eZ = MIN(bZ + blk[2], lZ + oZ);
+
+			// printf("%d: %d-%d  %d-%d  %d-%d  %d - %d\n", omp_get_thread_num(), bZ, eZ, bY, eY, bX, eX, threadStartX, threadEndX);
+
+			for (int x = bX; x < eX; ++x) {
+			for (int y = bY; y < eY; ++y) {
+			for (int z = bZ; z < eZ; ++z) {
+
+				for (int d = 0; d < N_D3Q19; ++d) {
+					pdfs[0][P_INDEX_5(gDims, x, y, z, d)] = -50.0;
 				}
-			}
-		}
+
+			} } } // x, y, z
+		} } } // bx, by, bz
 	}
+
 
 	// Initialize all PDFs to some standard value.
-	for (int x = 0; x < gX; ++x) {
-		for (int y = 0; y < gY; ++y) {
-			for (int z = 0; z < gZ; ++z) {
-				for (int d = 0; d < N_D3Q19; ++d) {
-					pdfs[0][P_INDEX_5(gDims, x, y, z, d)] = 0.0;
-					pdfs[1][P_INDEX_5(gDims, x, y, z, d)] = 0.0;
-				}
-			}
+	for (int x = oX; x < lX + oX; ++x) {
+	for (int y = oY; y < lY + oY; ++y) {
+	for (int z = oZ; z < lZ + oZ; ++z) {
+		for (int d = 0; d < N_D3Q19; ++d) {
+			pdfs[0][P_INDEX_5(gDims, x, y, z, d)] = 0.0;
 		}
-	}
+	} } } // x, y, z
 
 
 	// Count how many *PDFs* need bounce back treatment.
@@ -476,7 +464,6 @@ static void D3Q19InternalInit(int blocking, LatticeDesc * ld, KernelData ** kern
 	// int64_t nBounceBackPdfs = 0;
 	int nx, ny, nz, px, py, pz;
 
-	// TODO: apply blocking?
 
 	for (int x = 0; x < lX; ++x) {
 		for (int y = 0; y < lY; ++y) {
@@ -484,17 +471,10 @@ static void D3Q19InternalInit(int blocking, LatticeDesc * ld, KernelData ** kern
 
 				if (ld->Lattice[L_INDEX_4(ld->Dims, x, y, z)] != LAT_CELL_OBSTACLE) {
 					for (int d = 0; d < N_D3Q19; ++d) {
-#ifdef PROP_MODEL_PUSH
-						nx = x + D3Q19_X[d];
-						ny = y + D3Q19_Y[d];
-						nz = z + D3Q19_Z[d];
-#elif PROP_MODEL_PULL
 						nx = x - D3Q19_X[d];
 						ny = y - D3Q19_Y[d];
 						nz = z - D3Q19_Z[d];
-#else
-	#error PROP_MODEL_NAME unknown.
-#endif
+
 						// Check if neighbor is inside the lattice.
 						// if(nx < 0 || ny < 0 || nz < 0 || nx >= lX || ny >= lY || nz >= lZ) {
 						// 	continue;
@@ -520,7 +500,6 @@ static void D3Q19InternalInit(int blocking, LatticeDesc * ld, KernelData ** kern
 		}
 	}
 
-
 	printf("# allocating %d indices for bounce back pdfs (%s for source and destination array)\n", nBounceBackPdfs, ByteToHuman(sizeof(int) * nBounceBackPdfs * 2));
 
 	MemAlloc((void **) & (kd->BounceBackPdfsSrc), sizeof(int) * nBounceBackPdfs + 100);
@@ -532,36 +511,36 @@ static void D3Q19InternalInit(int blocking, LatticeDesc * ld, KernelData ** kern
 	int srcIndex;
 	int dstIndex;
 
+	// TODO: currently this is not NUMA-aware
+    //       - maybe use the same blocking as for lattice initialization?
+	//       - do place the bounce back index vector parallel?
+
 	for (int x = 0; x < lX; ++x) {
 		for (int y = 0; y < lY; ++y) {
 			for (int z = 0; z < lZ; ++z) {
 
 				if (ld->Lattice[L_INDEX_4(ld->Dims, x, y, z)] != LAT_CELL_OBSTACLE) {
 					for (int d = 0; d < N_D3Q19; ++d) {
-#ifdef PROP_MODEL_PUSH
 						nx = x + D3Q19_X[d];
 						ny = y + D3Q19_Y[d];
 						nz = z + D3Q19_Z[d];
-#elif PROP_MODEL_PULL
-						nx = x - D3Q19_X[d];
-						ny = y - D3Q19_Y[d];
-						nz = z - D3Q19_Z[d];
-#else
-	#error PROP_MODEL_NAME unknown.
-#endif
 
 						if ( 	((nx < 0 || nx >= lX) && ld->PeriodicX) ||
 								((ny < 0 || ny >= lY) && ld->PeriodicY) ||
 								((nz < 0 || nz >= lZ) && ld->PeriodicZ)
 						){
-							// Implement periodic boundary in X direction.
+							// For periodicity:
 
-							// If the target node reached through propagation is outside the lattice
-							// the kernel stores it in some buffer around the domain.
-							// From this position the PDF must be transported to the other side of the
-							// geometry.
+							// We assume we have finished odd time step (accessing neighbor PDFs) and are
+							// before executing the even time step (accessing local PDFs only).
 
-							// Take PDF from outside the domain.
+							// Assuming we are at the most east position of the lattice. Through the odd
+							// time step propagation has put a PDF in the east slot of the ghost cell east
+							// of us, i.e. nx, ny, nz.  We copy it to the east slot of the most west node.
+
+							// In case of transition from even to odd time step , src and dest must be
+							// exchanged.
+
 
 							// x periodic
 							if (nx < 0) {
@@ -594,25 +573,15 @@ static void D3Q19InternalInit(int blocking, LatticeDesc * ld, KernelData ** kern
 							}
 
 							if (ld->Lattice[L_INDEX_4(lDims, px, py, pz)] == LAT_CELL_OBSTACLE) {
-#ifdef PROP_MODEL_PUSH
+								// See description of bounce back handling below.
 								srcIndex = P_INDEX_5(gDims, nx + oX, ny + oY, nz + oZ, d);
 								dstIndex = P_INDEX_5(gDims,  x + oX,  y + oY,  z + oZ, D3Q19_INV[d]);
-#elif PROP_MODEL_PULL
-								srcIndex = P_INDEX_5(gDims,  x + oX,  y + oY,  z + oZ, D3Q19_INV[d]);
-								dstIndex = P_INDEX_5(gDims, nx + oX, ny + oY, nz + oZ, d);
-#endif
 							}
 							else {
 
-#ifdef PROP_MODEL_PUSH
 								srcIndex = P_INDEX_5(gDims, nx + oX, ny + oY, nz + oZ, d);
 								// Put it on the other side back into the domain.
 								dstIndex = P_INDEX_5(gDims, px + oX, py + oY, pz + oZ, d);
-#elif PROP_MODEL_PULL
-								srcIndex = P_INDEX_5(gDims, px + oX, py + oY, pz + oZ, d);
-								// Put it on the other side back into the ghost layer.
-								dstIndex = P_INDEX_5(gDims, nx + oX, ny + oY, nz + oZ, d);
-#endif
 
 								VerifyMsg(nBounceBackPdfs < kd->nBounceBackPdfs, "nBBPdfs %d < kd->nBBPdfs %d  xyz: %d %d %d d: %d\n", nBounceBackPdfs, kd->nBounceBackPdfs, x, y, z, d);
 
@@ -628,15 +597,21 @@ static void D3Q19InternalInit(int blocking, LatticeDesc * ld, KernelData ** kern
 							continue;
 						}
 						else if (ld->Lattice[L_INDEX_4(lDims, nx, ny, nz)] == LAT_CELL_OBSTACLE) {
-#ifdef PROP_MODEL_PUSH
+							// Depending on the time step we are in we have to exchange src and dst index.
+
+							// We build the list for the case, when we have finished odd time step
+							// (accessing neighbor PDFs) and before we start with the even time step
+							// (accessing local PDFs only).
+
+							// Assume our neighbor east of us, i.e. nx, ny, nz, is an obstacle cell.
+							// Then we have to move the east PDF from the obstacle to our west position,
+							// i.e. the inverse of east.
+
+							// In case of transition from even to odd time step src and dest just
+							// have to be exchanged.
+
 							srcIndex = P_INDEX_5(gDims, nx + oX, ny + oY, nz + oZ, d);
 							dstIndex = P_INDEX_5(gDims,  x + oX,  y + oY,  z + oZ, D3Q19_INV[d]);
-#elif PROP_MODEL_PULL
-							srcIndex = P_INDEX_5(gDims,  x + oX,  y + oY,  z + oZ, D3Q19_INV[d]);
-							dstIndex = P_INDEX_5(gDims, nx + oX, ny + oY, nz + oZ, d);
-							// srcIndex = P_INDEX_5(gDims,  x + oX,  y + oY,  z + oZ, d);
-							// dstIndex = P_INDEX_5(gDims, nx + oX, ny + oY, nz + oZ, D3Q19_INV[d]);
-#endif
 
 							VerifyMsg(nBounceBackPdfs < kd->nBounceBackPdfs, "nBBPdfs %d < kd->nBBPdfs %d  xyz: %d %d %d d: %d\n", nBounceBackPdfs, kd->nBounceBackPdfs, x, y, z, d);
 
@@ -659,12 +634,7 @@ static void D3Q19InternalInit(int blocking, LatticeDesc * ld, KernelData ** kern
 	kd->BoundaryConditionsGetPdf = FNAME(BcGetPdf);
 	kd->BoundaryConditionsSetPdf = FNAME(BcSetPdf);
 
-	if (blocking) {
-		kd->Kernel = FNAME(D3Q19BlkKernel);
-	}
-	else {
-		kd->Kernel = FNAME(D3Q19Kernel);
-	}
+	kd->Kernel = FNAME(D3Q19AaVecKernel);
 
 	kd->DstPdfs = NULL;
 	kd->PdfsActive = kd->Pdfs[0];
@@ -672,17 +642,9 @@ static void D3Q19InternalInit(int blocking, LatticeDesc * ld, KernelData ** kern
 	return;
 }
 
-
-void FNAME(D3Q19BlkInit)(LatticeDesc * ld, KernelData ** kernelData, Parameters * params)
-{
-	D3Q19InternalInit(1, ld, kernelData, params);
-}
-
-
-void FNAME(D3Q19BlkDeinit)(LatticeDesc * ld, KernelData ** kernelData)
+void FNAME(D3Q19AaVecDeinit)(LatticeDesc * ld, KernelData ** kernelData)
 {
 	MemFree((void **) & ((*kernelData)->Pdfs[0]));
-	MemFree((void **) & ((*kernelData)->Pdfs[1]));
 
 	MemFree((void **) & ((*kernelData)->BounceBackPdfsSrc));
 	MemFree((void **) & ((*kernelData)->BounceBackPdfsDst));
@@ -692,17 +654,3 @@ void FNAME(D3Q19BlkDeinit)(LatticeDesc * ld, KernelData ** kernelData)
 	return;
 }
 
-// Kernels without blocking perform the same initialization/deinitialization as with
-// blocking, except that a different kernel is called. Hence, no arguments are allowed.
-
-void FNAME(D3Q19Init)(LatticeDesc * ld, KernelData ** kernelData, Parameters * params)
-{
-	D3Q19InternalInit(0, ld, kernelData, params);
-
-}
-
-void FNAME(D3Q19Deinit)(LatticeDesc * ld, KernelData ** kernelData)
-{
-	FNAME(D3Q19BlkDeinit)(ld, kernelData);
-	return;
-}

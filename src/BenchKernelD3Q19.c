@@ -28,6 +28,7 @@
 
 #include "Memory.h"
 #include "Vtk.h"
+#include "LikwidIf.h"
 
 #include <inttypes.h>
 #include <math.h>
@@ -98,6 +99,8 @@ void FNAME(D3Q19Kernel)(LatticeDesc * ld, KernelData * kernelData, CaseData * cd
 
 	for (int iter = 0; iter < maxIterations; ++iter) {
 
+		X_LIKWID_START("os");
+
 		#ifdef _OPENMP
 		#pragma omp parallel for collapse(3) default(none) \
 				shared(gDims,src, dst, w_0, w_1, w_2, omegaEven, omegaOdd, \
@@ -112,9 +115,9 @@ void FNAME(D3Q19Kernel)(LatticeDesc * ld, KernelData * kernelData, CaseData * cd
 				  	evenPart, oddPart, w_1_indep, w_2_indep)
 		#endif
 
-		for (int z = oZ; z < nZ + oZ; ++z) {
+		for (int x = oX; x < nX + oX; ++x) {
 			for (int y = oY; y < nY + oY; ++y) {
-				for (int x = oX; x < nX + oX; ++x) {
+				for (int z = oZ; z < nZ + oZ; ++z) {
 					#define I(x, y, z, dir)	P_INDEX_5(gDims, (x), (y), (z), (dir))
 
 #ifdef PROP_MODEL_PUSH
@@ -305,6 +308,9 @@ void FNAME(D3Q19Kernel)(LatticeDesc * ld, KernelData * kernelData, CaseData * cd
 				}
 			}
 		} // z, y, x (from inner to outer)
+
+		// Stop counters before bounce back. Else computing loop balance will be incorrect.
+		X_LIKWID_STOP("os");
 
 		// Fixup bounce back PDFs.
 		#ifdef _OPENMP
@@ -429,21 +435,8 @@ void FNAME(D3Q19BlkKernel)(LatticeDesc * ld, KernelData * kernelData, CaseData *
 
 	for (int iter = 0; iter < maxIterations; ++iter) {
 
-		// #ifdef _OPENMP --> add line continuation
-		// #pragma omp parallel for collapse(3) default(none)
-		// 		shared(gDims,src, dst, w_0, w_1, w_2, omegaEven, omegaOdd,
-		// 		w_1_x3, w_2_x3, w_1_nine_half, w_2_nine_half, cd,
-		// 		oX, oY, oZ, nX, nY, nZ, blk)
-		// 		private(ux, uy, uz, ui, dens, dir_indep_trm,
-		// 			pdf_C,
-		// 		  	pdf_N, pdf_E, pdf_S, pdf_W,
-		// 		  	pdf_NE, pdf_SE, pdf_SW, pdf_NW,
-		// 		  	pdf_T, pdf_TN, pdf_TE, pdf_TS, pdf_TW,
-		// 		  	pdf_B, pdf_BN, pdf_BE, pdf_BS, pdf_BW,
-		// 		  	evenPart, oddPart, w_1_indep, w_2_indep)
-		// #endif
 		#ifdef _OPENMP
-		#pragma omp parallel for default(none) \
+		#pragma omp parallel default(none) \
 				shared(gDims,src, dst, w_0, w_1, w_2, omegaEven, omegaOdd, \
 				w_1_x3, w_2_x3, w_1_nine_half, w_2_nine_half, cd, \
 				oX, oY, oZ, nX, nY, nZ, blk, nThreads) \
@@ -455,16 +448,18 @@ void FNAME(D3Q19BlkKernel)(LatticeDesc * ld, KernelData * kernelData, CaseData *
 				  	pdf_B, pdf_BN, pdf_BE, pdf_BS, pdf_BW, \
 				  	evenPart, oddPart, w_1_indep, w_2_indep)
 		#endif
+		{
+			X_LIKWID_START("blk-os");
 
-		for (int i = 0; i < nThreads; ++i) {
+			int threadId = omp_get_thread_num();
 
-			int threadStartX = nX / nThreads * i;
-			int threadEndX   = nX / nThreads * (i + 1);
+			int threadStartX = nX / nThreads * threadId;
+			int threadEndX   = nX / nThreads * (threadId + 1);
 
 			if (nX % nThreads > 0) {
-				if (nX % nThreads > i) {
-					threadStartX += i;
-					threadEndX   += i + 1;
+				if (nX % nThreads > threadId) {
+					threadStartX += threadId;
+					threadEndX   += threadId + 1;
 				}
 				else {
 					threadStartX += nX % nThreads;
@@ -472,24 +467,18 @@ void FNAME(D3Q19BlkKernel)(LatticeDesc * ld, KernelData * kernelData, CaseData *
 				}
 			}
 
-		// for (int z = oZ; z < nZ + oZ; ++z) {
-		// 	for (int y = oY; y < nY + oY; ++y) {
-		// 		for (int x = oX; x < nX + oX; ++x) {
-		for (int bZ = oZ; bZ < nZ + oZ; bZ += blk[2]) {
+		for (int bX = oX + threadStartX; bX < threadEndX + oX; bX += blk[0]) {
 			for (int bY = oY; bY < nY + oY; bY += blk[1]) {
-				for (int bX = oX + threadStartX; bX < threadEndX + oX; bX += blk[0]) {
-				// for (int bX = oX; bX < nX + oX; bX += blk[0]) {
+				for (int bZ = oZ; bZ < nZ + oZ; bZ += blk[2]) {
 
 					// Must do everything here, else it would break collapse.
 					int eZ = MIN(bZ + blk[2], nZ + oZ);
 					int eY = MIN(bY + blk[1], nY + oY);
 					int eX = MIN(bX + blk[0], threadEndX + oX);
 
-//					printf("%d: %d-%d  %d-%d  %d-%d  %d - %d\n", omp_get_thread_num(), bZ, eZ, bY, eY, bX, eX, threadStartX, threadEndX);
-
-					for (int z = bZ; z < eZ; ++z) {
+					for (int x = bX; x < eX; ++x) {
 						for (int y = bY; y < eY; ++y) {
-							for (int x = bX; x < eX; ++x) {
+							for (int z = bZ; z < eZ; ++z) {
 
 					#define I(x, y, z, dir)	P_INDEX_5(gDims, (x), (y), (z), (dir))
 
@@ -497,7 +486,6 @@ void FNAME(D3Q19BlkKernel)(LatticeDesc * ld, KernelData * kernelData, CaseData *
 
 					// Load PDFs of local cell: pdf_N = src[I(x, y, z, D3Q19_N)]; ...
 					#define X(name, idx, idxinv, _x, _y, _z)	JOIN(pdf_,name) = src[I(x, y, z, idx)];
-					//if (isnan(JOIN(pdf_,name))) { printf("iter: %d %d %d %d %d %s nan\n", iter, x-oX, y-oY, z-oZ, idx, D3Q19_NAMES[idx]); exit(1);}
 					D3Q19_LIST
 					#undef X
 
@@ -505,7 +493,6 @@ void FNAME(D3Q19BlkKernel)(LatticeDesc * ld, KernelData * kernelData, CaseData *
 
 					// Load PDFs of local cell: pdf_N = src[I(x, y, z, D3Q19_N)]; ...
 					#define X(name, idx, idxinv, _x, _y, _z)	JOIN(pdf_,name) = src[I(x - _x, y - _y, z - _z, idx)];
-					//if (isnan(JOIN(pdf_,name))) { printf("iter: %d %d %d %d %d %s nan\n", iter, x-oX, y-oY, z-oZ, idx, D3Q19_NAMES[idx]); exit(1);}
 					D3Q19_LIST
 					#undef X
 
@@ -525,11 +512,11 @@ void FNAME(D3Q19BlkKernel)(LatticeDesc * ld, KernelData * kernelData, CaseData *
 					} else {
 					#endif
 						ux = pdf_E + pdf_NE + pdf_SE + pdf_TE + pdf_BE -
-							pdf_W - pdf_NW - pdf_SW - pdf_TW - pdf_BW;
+							 pdf_W - pdf_NW - pdf_SW - pdf_TW - pdf_BW;
 						uy = pdf_N + pdf_NE + pdf_NW + pdf_TN + pdf_BN -
-							pdf_S - pdf_SE - pdf_SW - pdf_TS - pdf_BS;
+							 pdf_S - pdf_SE - pdf_SW - pdf_TS - pdf_BS;
 						uz = pdf_T + pdf_TE + pdf_TW + pdf_TN + pdf_TS -
-							pdf_B - pdf_BE - pdf_BW - pdf_BN - pdf_BS;
+							 pdf_B - pdf_BE - pdf_BW - pdf_BN - pdf_BS;
 					#ifdef LID_DRIVEN_CAVITY
 					}
 
@@ -685,7 +672,10 @@ void FNAME(D3Q19BlkKernel)(LatticeDesc * ld, KernelData * kernelData, CaseData *
 			}
 		} // z, y, x (from inner to outer)
 
-		} // loop over threads
+			X_LIKWID_STOP("blk-os");
+		} // parallel region
+
+		// Stop counters before bounce back. Else computing loop balance will be incorrect.
 
 		// Fixup bounce back PDFs.
 		#ifdef _OPENMP

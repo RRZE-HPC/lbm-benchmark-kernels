@@ -54,16 +54,16 @@ Debug and Verification
 
 :: 
 
-  make
+  make BUILD=debug BENCHMARK=off
 
-Running ``make`` without any arguments builds the debug version (BUILD=debug) of
+Running ``make`` with ``BUILD=debug`` builds the debug version of
 the benchmark kernels, where no optimizations are performed,  line numbers and
 debug symbols are included as well as ``DEBUG`` will be defined.  The resulting
 binary will be found in the ``bin`` subdirectory and named
 ``lbmbenchk-linux-<compiler>-debug``.
  
-Without any further specification the binary includes verification
-(``VERIFICATION=on``), statistics (``STATISTICS``), and VTK output
+Specifying ``BENCHMARK=off`` turns on verification
+(``VERIFICATION=on``), statistics (``STATISTICS=on``), and VTK output
 (``VTK_OUTPUT=on``) enabled. 
 
 Please note that the generated binary will therefore
@@ -74,9 +74,10 @@ Benchmarking
 
 To generate a binary for benchmarking run make with ::
 
-  make BENCHMARK=on BUILD=release
+  make 
 
-Here BUILD=release turns optimizations on and BENCHMARK=on disables
+As default ``BENCHMARK=on`` and ``BUILD=release`` is set, where
+BUILD=release turns optimizations on and ``BENCHMARK=on`` disables
 verfification, statistics, and VTK output.
 
 Release and Verification
@@ -85,7 +86,7 @@ Release and Verification
 Verification with the debug builds can be extremely slow. Hence verification
 capabilities can be build with release builds: ::
 
-  make BUILD=release
+  make BENCHMARK=off 
 
 Compilers
 ---------
@@ -93,6 +94,24 @@ Compilers
 Currently only the GCC and Intel compiler under Linux are supported. Between
 both configuration can be chosen via ``CONFIG=linux-gcc`` or
 ``CONFIG=linux-intel``.
+
+
+Cleaning
+--------
+
+For each configuration and build (debug/release) a subdirectory under the
+``src/obj`` directory is created where the dependency and object files are
+stored.
+With ::
+
+  make CONFIG=... BUILD=... clean
+
+a specific combination is select and cleaned, whereas with ::
+
+  make clean-all
+
+all object and dependency files are deleted.
+
 
 Options Summary
 ---------------
@@ -102,13 +121,13 @@ Options that can be specified when building the framework with make:
 ============= ======================= ============ ==========================================================
 name          values                  default      description
 ------------- ----------------------- ------------ ----------------------------------------------------------
-TARCH         --                      --           Via TARCH the architecture the compiler generates code for can be overriden. The value depends on the chose compiler.
-BENCHMARK     on, off                 off          If enabled, disables VERIFICATION, STATISTICS, VTK_OUTPUT.
-BUILD         debug, release          debug        No optimization, debug symbols, DEBUG defined.
+BENCHMARK     on, off                 on           If enabled, disables VERIFICATION, STATISTICS, VTK_OUTPUT. If disabled enables the three former options.
+BUILD         debug, release          release      No optimization, debug symbols, DEBUG defined.
 CONFIG        linux-gcc, linux-intel  linux-intel  Select GCC or Intel compiler. 
 ISA           avx, sse                avx          Determines which ISA extension is used for macro definitions. This is *not* the architecture the compiler generates code for.
 OPENMP        on, off                 on           OpenMP, i.\,e.\. threading support.
 STATISTICS    on, off                 off          View statistics, like density etc, during simulation. 
+TARCH         --                      --           Via TARCH the architecture the compiler generates code for can be overridden. The value depends on the chosen compiler.
 VERIFICATION  on, off                 off          Turn verification on/off.
 VTK_OUTPUT    on, off                 off          Enable/Disable VTK file output.
 ============= ======================= ============ ==========================================================
@@ -116,11 +135,11 @@ VTK_OUTPUT    on, off                 off          Enable/Disable VTK file outpu
 Invocation
 ==========
 
-Running the binary will print among the GPL licence header a line like the following:
+Running the binary will print among the GPL licence header a line like the following: ::
  
   LBM Benchmark Kernels 0.1, compiled Jul  5 2017 21:59:22, type: verification
 
-if verfication was enabled during compilation or
+if verfication was enabled during compilation or ::
 
   LBM Benchmark Kernels 0.1, compiled Jul  5 2017 21:59:22, type: benchmark
 
@@ -159,7 +178,7 @@ iterations, etc, which can afterward be override, e.g.: ::
 Kernel specific parameters can be opatained via selecting the specific kernel
 and passing ``-h`` as parameter: ::
 
-  $ bin/lbmbenchk-linux-intel-release -kernel -- -h
+  $ bin/lbmbenchk-linux-intel-release -kernel kernel-name -- -h
   ...
   Kernel parameters:
   [-blk <n>] [-blk-[xyz] <n>]
@@ -193,6 +212,82 @@ A list of all available kernels can be obtained via ``-list``: ::
      blk-pull-soa
      blk-pull-aos
 
+Kernels
+-------
+
+The following list shortly describes available kernels:
+
+- push-soa/push-aos/pull-soa/pull-aos:
+  Unoptimized kernels (but stream/collide are already fused) using two grids as
+  source and destination. Implement push/pull semantics as well structure of
+  arrays (soa) or array of structures (aos) layout.
+
+- blk-push-soa/blk-push-aos/blk-pull-soa/blk-pull-aos:
+  The same as the unoptimized kernels without the blk prefix, except that they support
+  spatial blocking, i.e. loop blocking of the three loops used to iterate over
+  the lattice. Here manual work sharing for OpenMP is used.
+
+- list-push-soa/list-push-aos/list-pull-soa/list-pull-aos:
+  The same as the unoptimized kernels without the list prefix, but for indirect addressing.
+  Here only a 1D vector of is used to store the fluid nodes, omitting the
+  obstacles. An adjacency list is used to recover the neighborhood associations.
+
+- list-pull-split-nt-1s-soa/list-pull-split-nt-2s-soa:
+  Optimized variant of list-pull-soa. Chunks of the lattice are processed as
+  once. Postcollision values are written back via nontemporal stores in 18 (1s)
+  or 9 (2s) loops.
+
+- list-aa-aos/list-aa-soa:
+  Unoptimized implementation of the AA pattern for the 1D vector with adjacency
+  list. Supported are array of structures (aos) and structure of arrays (soa)
+  data layout is supported.
+
+- list-aa-ria-soa:
+  Implementation of AA pattern with intrinsics for the 1D vector with adjacency
+  list. Furthermore it contains a vectorized even time step and run length
+  coding to reduce the loop balance of the odd time step.
+
+- list-aa-pv-soa:
+  All optimizations of list-aa-ria-soa. Additional with partial vectorization
+  of the odd time step.
+
+
+Note that all array of structures (aos) kernels might require blocking
+(depending on the domain size) to reach the performance of their structure of
+arrays (soa) counter parts.
+
+The following table summarizes the properties of the kernels. Here **D** means
+direct addressing, i.e. full array, **I** means indirect addressing, i.e. 1D
+vector with adjacency list, **x** means supported, whereas **--** means unsupported.
+The loop balance B_l is computed for D3Q19 model with double precision floating
+point for PDFs (8 byte) and 4 byte integers for the index (adjacency list).
+As list-aa-ria-soa and list-aa-pv-soa support run length coding their effective
+loop balance depends on the geometry. The effective loop balance is printed
+during each run.
+
+
+====================== =========== =========== ===== ======== ======== ============
+kernel name            prop. step  data layout addr. parallel blocking B_l [B/FLUP]
+====================== =========== =========== ===== ======== ======== ============
+push-soa               OS          SoA         D     x         --      456
+push-aos               OS          AoS         D     x         --      456
+pull-soa               OS          SoA         D     x         --      456
+pull-aos               OS          AoS         D     x         --      456
+blk-push-soa           OS          SoA         D     x         x       456
+blk-push-aos           OS          AoS         D     x         x       456
+blk-pull-soa           OS          SoA         D     x         x       456
+blk-pull-aos           OS          AoS         D     x         x       456
+list-push-soa          OS          SoA         I     x         x       528
+list-push-aos          OS          AoS         I     x         x       528
+list-pull-soa          OS          SoA         I     x         x       528
+list-pull-aos          OS          AoS         I     x         x       528
+list-pull-split-nt-1s  OS          SoA         I     x         x       376
+list-pull-split-nt-2s  OS          SoA         I     x         x       376
+list-aa-soa            AA          SoA         I     x         x       340
+list-aa-aos            AA          AoS         I     x         x       340
+list-aa-ria-soa        AA          SoA         I     x         x       304-342
+list-aa-pv-soa         AA          SoA         I     x         x       304-342
+====================== =========== =========== ===== ======== ======== ============
 
 Benchmarking
 ============
@@ -200,8 +295,8 @@ Benchmarking
 Correct benchmarking is a nontrivial task. Whenever benchmark results should be
 created make sure the binary was compiled with:  
 
-- ``BENCHMARK=on`` and
-- ``BUILD=release`` and 
+- ``BENCHMARK=on`` (default if not overriden) and
+- ``BUILD=release`` (default if not overriden) and 
 - the correct ISA for macros is used, selected via ``ISA`` and
 - use ``TARCH`` to specify the architecture the compiler generates code for.
 
@@ -214,7 +309,13 @@ Things the binary does nor check or controll:
 
 - transparent huge pages: when allocating memory small 4 KiB pages might be
   replaced with larger ones. This is in general a good thing, but if this is
-  really the case, depends on the system settings.
+  really the case, depends on the system settings (check e.g. the status of
+  ``/sys/kernel/mm/transparent_hugepage/enabled``).
+  Currently ``madvise(MADV_HUGEPAGE)`` is used for allocations which are aligned to
+  a 4 KiB page, which should be the case for the lattices. 
+  This should result in huge pages except THP is disabled on the machine.
+  (NOTE: madvise() is used if ``HAVE_HUGE_PAGES`` is defined, which is currently
+  hard coded defined in ``Memory.c``).
 
 - CPU/core frequency: For reproducible results the frequency of all cores
   should be fixed.
@@ -228,13 +329,68 @@ Things the binary does nor check or controll:
 - System load: interference with other application, espcially on desktop
   systems should be avoided.
 
-- Padding: most kernels do not care about padding against cache or TLB
-  thrashing. Even if the number of (fluid) nodes suggest everything is fine,
-  through parallelization still problems might occur.
+- Padding: For SoA based kernels the number of (fluid) nodes is automatically
+  adjusted so that no cache or TLB thrashing should occur. The parameters are
+  optimized for current Intel based systems. For more details look into the
+  padding section.
 
 - CPU dispatcher function: the compiler might add different versions of a
   function for different ISA extensions. Make sure the code you might think is
   executed is actually the code which is executed.
+
+Padding
+-------
+
+With correct padding cache and TLB thrashing can be avoided. Therefore the
+number of (fluid) nodes used in the data layout is artificially increased.
+
+Currently automatic padding is active for kernels which support it. It can be
+controlled via the kernel parameter (i.e. parameter after the ``--``)
+``-pad``. Supported values are ``auto`` (default), ``no`` (to disable padding),
+or a manual padding.
+
+Automatic padding tries to avoid cache and TLB thrashing and pads for a 32
+entry (huge pages) TLB with 8 sets and a 512 set (L2) cache. This reflects the
+parameters of current Intel based processors.
+
+Manual padding is done via a padding string and has the format
+``mod_1+offset_1(,mod_n+offset_n)``, which specifies numbers of bytes.
+SoA data layouts can exhibit TLB thrashing. Therefore we want to distribute the
+19 pages with one lattice (36 with two lattices) we are concurrently accessing
+over as much sets in the TLB as possible.
+This is controlled by the distance between the accessed pages, which is the
+number of (fluid) nodes in between them and can be adjusted by adding further
+(fluid) nodes.
+We want the distance d (in bytes) between two accessed pages to be e.g. 
+**d % (PAGE_SIZE * TLB_SETS) = PAGE_SIZE**. 
+This would distribute the pages evenly over the sets. Hereby **PAGE_SIZE * TLB_SETS**
+would be our ``mod_1`` and **PAGE_SIZE** (after the =) our ``offset_1``.
+Measurements show that with only a quarter of half of a page size as offset
+higher performance is achieved, which is done by automatic padding.
+On top of this padding more paddings can be added. They are just added to the
+padding string and are separated by commas.
+
+A zero modulus in the padding string has a special meaning. Here the
+corresponding offset is just added to the number of nodes. A padding string
+like ``-pad 0+16`` would at a static padding of two nodes (one node = 8 b).
+
+
+Geometries
+==========
+
+TODO: supported geometries: channel, pipe, blocks
+
+
+Results
+=======
+
+TODO
+
+
+Licence
+=======
+
+The Lattice Boltzmann Benchmark Kernels are licensed under GPLv3.
 
 
 Acknowledgements

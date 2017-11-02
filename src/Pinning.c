@@ -34,9 +34,6 @@
 #include "Base.h"
 #include "Pinning.h"
 
-
-
-
 // -----------------------------------------------------------------------
 //
 // Binds the calling thread to specified core.
@@ -73,8 +70,7 @@ int PinCurrentThreadToCore(int coreNumber)
 //
 // -----------------------------------------------------------------------
 
-int PinCurrentThreadByEnvVar(const char * envVarName,
-	int mpiRank, int nodeRank, int threadNumber)
+int PinCurrentThreadByEnvVar(const char * envVarName, int threadNumber)
 {
 	const char * envVarValue;
 	int core;
@@ -82,14 +78,12 @@ int PinCurrentThreadByEnvVar(const char * envVarName,
 	envVarValue = getenv(envVarName);
 
 	if (envVarValue == NULL) {
-		if (mpiRank == 0) {
-			Print("skip pinning: env var %s not set\n", envVarName);
-		}
+		printf("WARNING: skip pinning: env var %s not set\n", envVarName);
 
 		return 0;
 	}
 
-	core = PinParseCpuList(envVarValue, mpiRank, nodeRank, threadNumber);
+	core = PinParseCpuList(envVarValue, threadNumber);
 
 	if (core < 0) {
 		return core;
@@ -107,20 +101,17 @@ int PinCurrentThreadByEnvVar(const char * envVarName,
 //
 // -----------------------------------------------------------------------
 
-int PinCurrentThreadByCpuList(const char * cpuList,
-	int mpiRank, int nodeRank, int threadNumber)
+int PinCurrentThreadByCpuList(const char * cpuList, int threadNumber)
 {
 	int core;
 
 	if (cpuList == NULL) {
-		if (mpiRank == 0) {
-			printf("ERROR: cpu list is NULL.\n");
-		}
+		printf("ERROR: cpu list is NULL.\n");
 
 		exit(1);
 	}
 
-	core = PinParseCpuList(cpuList, mpiRank, nodeRank, threadNumber);
+	core = PinParseCpuList(cpuList, threadNumber);
 
 	if (core < 0) {
 		return core;
@@ -133,31 +124,13 @@ int PinCurrentThreadByCpuList(const char * cpuList,
 // -----------------------------------------------------------------------
 //
 // Parses the provided cpu list and returns the core number for the
-// specified MPI rank, local rank, and thread.
+// specified thread.
 //
-// The cpu list has for example a format of: 0,1,2 or 0,1,2_3,4,5
-//
-// Blocks (0,1,2 or 3,4,5) separated by "_" specify pinning inside a
-// node rank. The first block maps to node rank 1, the second to node
-// rank 2, etc.
-//
-// Inside a block the core numbers specify where the threads should
-// be pinned to. They are separated by "," and the first number maps
-// to the first core, the second number to the second core, etc.
-//
-// For example: 0,2,4_6,8,10
-//
-// Node rank 0 thread 0 pinned to core  0
-//           0        1                 2
-//           0        2                 4
-//           1        0                 6
-//           1        1                 8
-//           1        2                10
+// The cpu list has for example a format of: 0,1,2
 //
 // -----------------------------------------------------------------------
 
-int PinParseCpuList(const char * cpuList,
-		int mpiRank, int nodeRank, int threadNumber)
+int PinParseCpuList(const char * cpuList, int threadNumber)
 {
 	int cpu = -1;
 
@@ -168,8 +141,8 @@ int PinParseCpuList(const char * cpuList,
 	const char * c = cpuList;
 
 	// Ensure only valid characters are in the cpu list.
-	// Cpu list is in the format of "0,1,2_3,4,5".
-	while (((*c >= '0' && *c <= '9') || *c == ',' || *c == '_')) {
+	// Cpu list is in the format of "0,1,2,3,4,5".
+	while (((*c >= '0' && *c <= '9') || *c == ',')) {
 		++c;
 	}
 
@@ -180,19 +153,6 @@ int PinParseCpuList(const char * cpuList,
 
 	c = cpuList;
 
-	int i = 0;
-
-	// Move variable c after the "nodeRank"th "_" in the cpu list.
-	while (i < nodeRank && *c != 0x00) {
-    	if (*c == '_') ++i;
-		++c;
-	}
-
-	if (i != nodeRank || *c < '0' || *c > '9') {
-		// Cpu list for this node rank not found.
-		return -3;
-  	}
-
 	// Now find the core for the specified thread.
 
 	int t = 0;
@@ -201,11 +161,6 @@ int PinParseCpuList(const char * cpuList,
 		if (*c == ',') {
 			++t;
 		}
-		else if (*c == '_') {
-			// Unexpected character at this position.
-			break;
-		}
-
 		++c;
 	}
 

@@ -37,7 +37,8 @@ typedef enum GEO_TYPES_ {
 	GEO_TYPE_PIPE = 2,
 	GEO_TYPE_BLOCKS = 3,	// Expects a pointer to an integer, holding the
 						    // value of the block size as type detail.
-	GEO_TYPE_MAX = 3
+	GEO_TYPE_FLUID = 4,
+	GEO_TYPE_MAX = 4
 } GEO_TYPES;
 
 

@@ -728,9 +728,9 @@ static void KernelOdd(LatticeDesc * ld, KernelData * kernelData, CaseData * cd)
 			//voddPart  = vomegaOdd  * (VONE_HALF * (vpdf_TS - vpdf_BN) - vui * vw_2_x3);
 			voddPart = VMUL(vomegaOdd,VSUB(VMUL(VONE_HALF,VSUB(vpdf_TS,vpdf_BN)),VMUL(vui,vw_2_x3)));
 			//src[ADJ_LIST(D3Q19_TS)] =[UA] vpdf_TS - vevenPart - voddPart;
-			VSTU(ppdf_TN, VSUB(VSUB(vpdf_TS,vevenPart),voddPart));
+			VSTU(ppdf_BN, VSUB(VSUB(vpdf_TS,vevenPart),voddPart));
 			//src[ADJ_LIST(D3Q19_BN)] =[UA] vpdf_BN - vevenPart + voddPart;
-			VSTU(ppdf_BN, VADD(VSUB(vpdf_BN,vevenPart),voddPart));
+			VSTU(ppdf_TS, VADD(VSUB(vpdf_BN,vevenPart),voddPart));
 
 			//vui = vuy + vuz;
 			vui = VADD(vuy,vuz);
@@ -783,20 +783,20 @@ static void KernelOdd(LatticeDesc * ld, KernelData * kernelData, CaseData * cd)
 			ui = uy;
 			evenPart = omegaEven * (0.5 * (pdf_N + pdf_S) - ui * ui * w_1_nine_half - w_1_indep);
 			oddPart  = omegaOdd  * (0.5 * (pdf_N - pdf_S) - ui * w_1_x3);
-			src[ADJ_LIST(D3Q19_N)]  = pdf_N - evenPart - oddPart;
-			src[ADJ_LIST(D3Q19_S)]  = pdf_S - evenPart + oddPart;
+			*ppdf_S  = pdf_N - evenPart - oddPart;
+			*ppdf_N  = pdf_S - evenPart + oddPart;
 
 			ui = ux;
 			evenPart = omegaEven * (0.5 * (pdf_E + pdf_W) - ui * ui * w_1_nine_half - w_1_indep);
 			oddPart  = omegaOdd  * (0.5 * (pdf_E - pdf_W) - ui * w_1_x3);
-			src[ADJ_LIST(D3Q19_E)]  = pdf_E - evenPart - oddPart;
-			src[ADJ_LIST(D3Q19_W)]  = pdf_W - evenPart + oddPart;
+			*ppdf_W  = pdf_E - evenPart - oddPart;
+			*ppdf_E  = pdf_W - evenPart + oddPart;
 
 			ui = uz;
 			evenPart = omegaEven * (0.5 * (pdf_T + pdf_B) - ui * ui * w_1_nine_half - w_1_indep);
 			oddPart  = omegaOdd  * (0.5 * (pdf_T - pdf_B) - ui * w_1_x3);
-			src[ADJ_LIST(D3Q19_T)]  = pdf_T - evenPart - oddPart;
-			src[ADJ_LIST(D3Q19_B)]  = pdf_B - evenPart + oddPart;
+			*ppdf_B  = pdf_T - evenPart - oddPart;
+			*ppdf_T  = pdf_B - evenPart + oddPart;
 
 			// direction: w_2
 			w_2_indep = w_2 * dir_indep_trm;
@@ -804,38 +804,38 @@ static void KernelOdd(LatticeDesc * ld, KernelData * kernelData, CaseData * cd)
 			ui = -ux + uy;
 			evenPart = omegaEven * (0.5 * (pdf_NW + pdf_SE) - ui * ui * w_2_nine_half - w_2_indep);
 			oddPart  = omegaOdd  * (0.5 * (pdf_NW - pdf_SE) - ui * w_2_x3);
-			src[ADJ_LIST(D3Q19_NW)] = pdf_NW - evenPart - oddPart;
-			src[ADJ_LIST(D3Q19_SE)] = pdf_SE - evenPart + oddPart;
+			*ppdf_SE = pdf_NW - evenPart - oddPart;
+			*ppdf_NW = pdf_SE - evenPart + oddPart;
 
 			ui = ux + uy;
 			evenPart = omegaEven * (0.5 * (pdf_NE + pdf_SW) - ui * ui * w_2_nine_half - w_2_indep);
 			oddPart  = omegaOdd  * (0.5 * (pdf_NE - pdf_SW) - ui * w_2_x3);
-			src[ADJ_LIST(D3Q19_NE)] = pdf_NE - evenPart - oddPart;
-			src[ADJ_LIST(D3Q19_SW)] = pdf_SW - evenPart + oddPart;
+			*ppdf_SW = pdf_NE - evenPart - oddPart;
+			*ppdf_NE = pdf_SW - evenPart + oddPart;
 
 			ui = -ux + uz;
 			evenPart = omegaEven * (0.5 * (pdf_TW + pdf_BE) - ui * ui * w_2_nine_half - w_2_indep);
 			oddPart  = omegaOdd  * (0.5 * (pdf_TW - pdf_BE) - ui * w_2_x3);
-			src[ADJ_LIST(D3Q19_TW)] = pdf_TW - evenPart - oddPart;
-			src[ADJ_LIST(D3Q19_BE)] = pdf_BE - evenPart + oddPart;
+			*ppdf_BE = pdf_TW - evenPart - oddPart;
+			*ppdf_TW = pdf_BE - evenPart + oddPart;
 
 			ui = ux + uz;
 			evenPart = omegaEven * (0.5 * (pdf_TE + pdf_BW) - ui * ui * w_2_nine_half - w_2_indep);
 			oddPart  = omegaOdd  * (0.5 * (pdf_TE - pdf_BW) - ui * w_2_x3);
-			src[ADJ_LIST(D3Q19_TE)] = pdf_TE - evenPart - oddPart;
-			src[ADJ_LIST(D3Q19_BW)] = pdf_BW - evenPart + oddPart;
+			*ppdf_BW = pdf_TE - evenPart - oddPart;
+			*ppdf_TE = pdf_BW - evenPart + oddPart;
 
 			ui = -uy + uz;
 			evenPart = omegaEven * (0.5 * (pdf_TS + pdf_BN) - ui * ui * w_2_nine_half - w_2_indep);
 			oddPart  = omegaOdd  * (0.5 * (pdf_TS - pdf_BN) - ui * w_2_x3);
-			src[ADJ_LIST(D3Q19_TS)] = pdf_TS - evenPart - oddPart;
-			src[ADJ_LIST(D3Q19_BN)] = pdf_BN - evenPart + oddPart;
+			*ppdf_BN = pdf_TS - evenPart - oddPart;
+			*ppdf_TS = pdf_BN - evenPart + oddPart;
 
 			ui = uy + uz;
 			evenPart = omegaEven * (0.5 * (pdf_TN + pdf_BS) - ui * ui * w_2_nine_half - w_2_indep);
 			oddPart  = omegaOdd  * (0.5 * (pdf_TN - pdf_BS) - ui * w_2_x3);
-			src[ADJ_LIST(D3Q19_TN)] = pdf_TN - evenPart - oddPart;
-			src[ADJ_LIST(D3Q19_BS)] = pdf_BS - evenPart + oddPart;
+			*ppdf_BS = pdf_TN - evenPart - oddPart;
+			*ppdf_TN = pdf_BS - evenPart + oddPart;
 
 			pointerOffset = 1;
 		}

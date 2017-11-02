@@ -24,21 +24,15 @@
 //  along with LbmBenchKernels.  If not, see <http://www.gnu.org/licenses/>.
 //
 // --------------------------------------------------------------------------
-#ifndef __PINNING_H__
-#define __PINNING_H__
+#ifndef __BENCH_KERNEL_D3Q19_AA_VEC__
+#define __BENCH_KERNEL_D3Q19_AA_VEC__
+
+#include "Kernel.h"
 
 
-int PinCurrentThreadToCore(int coreNumber);
-
-int PinParseCpuList(const char * cpuList, int threadNumber);
-
-int PinCurrentThreadByEnvVar(const char * envVarName, int threadNumber);
-
-int PinCurrentThreadByCpuList(const char * cpuList, int threadNumber);
-
-int PinCurrentCore();
-
-char * PinCpuListAsString();
+void D3Q19AaVecInit_AaSoA(LatticeDesc * ld, KernelData ** kernelData, Parameters * params);
+void D3Q19AaVecDeinit_AaSoA(LatticeDesc * ld, KernelData ** kernelData);
 
 
-#endif // __PINNING_H__
+
+#endif // __BENCH_KERNEL_D3Q19_AA_VEC__

@@ -29,6 +29,7 @@
 #include "Memory.h"
 #include "Vtk.h"
 #include "Vector.h"
+#include "LikwidIf.h"
 
 #include <inttypes.h>
 #include <math.h>
@@ -118,6 +119,8 @@ void FNAME(KernelPullSplitNt1S)(LatticeDesc * ld, KernelData * kernelData, CaseD
 		KernelStatistics(kd, ld, cd, 0);
 	#endif
 
+
+			X_LIKWID_START("list-pull-split-nt-1s");
 	#ifdef _OPENMP
 		#pragma omp parallel default(none) \
 			shared(nFluid, nCells, kd, kdl, adjList, src, dst, \
@@ -184,6 +187,7 @@ void FNAME(KernelPullSplitNt1S)(LatticeDesc * ld, KernelData * kernelData, CaseD
 
 		for(int iter = 0; iter < maxIterations; ++iter) {
 
+
 #if 1
 			#define INDEX_START	blIndexStart
 			#define INDEX_STOP  blIndexVec
@@ -201,6 +205,8 @@ void FNAME(KernelPullSplitNt1S)(LatticeDesc * ld, KernelData * kernelData, CaseD
 			#define INDEX_STOP	blIndexStop
 			#include "BenchKernelD3Q19ListPullSplitNt1SScalar.h"
 #endif
+
+
 			#pragma omp barrier
 
 			#pragma omp single
@@ -234,6 +240,9 @@ void FNAME(KernelPullSplitNt1S)(LatticeDesc * ld, KernelData * kernelData, CaseD
 
 		MemFree((void **)&tmpArray);
 	}
+
+
+	X_LIKWID_STOP("list-pull-split-nt-1s");
 
 #ifdef VTK_OUTPUT
 	if (cd->VtkOutput) {
@@ -321,6 +330,10 @@ void FNAME(KernelPullSplitNt2S)(LatticeDesc * ld, KernelData * kernelData, CaseD
 		KernelStatistics(kd, ld, cd, 0);
 	#endif
 
+
+			X_LIKWID_START("list-pull-split-nt-2s");
+
+
 	#ifdef _OPENMP
 		#pragma omp parallel default(none) \
 			shared(nFluid, nCells, kd, kdl, adjList, src, dst, \
@@ -406,6 +419,7 @@ void FNAME(KernelPullSplitNt2S)(LatticeDesc * ld, KernelData * kernelData, CaseD
 #endif
 			#pragma omp barrier
 
+
 			#pragma omp single
 			{
 				#ifdef VERIFICATION
@@ -437,6 +451,8 @@ void FNAME(KernelPullSplitNt2S)(LatticeDesc * ld, KernelData * kernelData, CaseD
 
 		MemFree((void **)&tmpArray);
 	}
+
+			X_LIKWID_STOP("list-pull-split-nt-2s");
 
 #ifdef VTK_OUTPUT
 	if (cd->VtkOutput) {

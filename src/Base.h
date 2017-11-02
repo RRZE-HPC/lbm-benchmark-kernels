@@ -44,8 +44,6 @@ static inline double Time()
 }
 
 
-#define TOOL_NAME "lbmbenchk"
-
 #define STRINGIFYX(x)   #x
 #define STRINGIFY(x)    STRINGIFYX(x)
 
@@ -117,17 +115,17 @@ static inline double Time()
         } while (0)
 
     #define Print(formatString, ...) \
-        fprintf(stdout, SHC_MAGENTA "[" TOOL_NAME "] " SHC_NC formatString, ##__VA_ARGS__)
+        fprintf(stdout, SHC_MAGENTA formatString SHC_NC, ##__VA_ARGS__)
 
     #define Warning(formatString, ...) \
-        fprintf(stdout, "[" TOOL_NAME "] WARNING: " formatString, ##__VA_ARGS__)
+        fprintf(stdout, SHC_BROWN "WARNING: " SHC_NC formatString, ##__VA_ARGS__)
 
     #define Error(formatString, ...) \
-        fprintf(stderr, SHC_RED "[" TOOL_NAME "] ERROR: " formatString SHC_NC , ##__VA_ARGS__)
-
+        fprintf(stderr, SHC_RED "ERROR: " formatString SHC_NC , ##__VA_ARGS__)
+/*
     #define DebugPrint(formatString, ...) \
-        fprintf(stderr, "[" TOOL_NAME "] DEBUG: " formatString, ##__VA_ARGS__)
-
+        fprintf(stderr, "DEBUG: " formatString, ##__VA_ARGS__)
+*/
     #ifndef NO_SHELL_COLORS
 
         // or "\e"

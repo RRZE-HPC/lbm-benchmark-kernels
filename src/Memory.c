@@ -24,10 +24,23 @@
 //  along with LbmBenchKernels.  If not, see <http://www.gnu.org/licenses/>.
 //
 // --------------------------------------------------------------------------
+// TODO: make configurable
+#define HAVE_HUGE_PAGES
+
+
+#ifdef HAVE_HUGE_PAGES
+#define _BSD_SOURCE
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>  // strerror
 #include <errno.h>
+
+
+#ifdef HAVE_HUGE_PAGES
+#include <sys/mman.h> // madvise
+#endif
 
 #include "Base.h"
 #include "Memory.h"
@@ -59,6 +72,19 @@ int MemAllocAligned(void ** ptr, size_t bytesToAlloc, size_t alignmentBytes)
 		Error("allocation of %lu bytes aligned to %lu bytes failed: %d - %s\n", bytesToAlloc, alignmentBytes, errno, strerror(errno));
 		exit(1);
 	}
+
+#ifdef HAVE_HUGE_PAGES
+
+	if (alignmentBytes % 4096 == 0) {
+		ret = madvise(*ptr, bytesToAlloc, MADV_HUGEPAGE);
+
+		if (ret != 0) {
+			DEBUG_BREAK_POINT();
+			Error("madvise(%p, %lu, MADV_HUGEPAGE) failed: %d - %s.\n", *ptr, bytesToAlloc, errno, strerror(errno));
+			exit(1);
+		}
+	}
+#endif
 
 	return 0;
 }

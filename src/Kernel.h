@@ -56,7 +56,7 @@
 #endif
 
 #ifdef PROP_MODEL_AA
-	#define PROP_MODEL_NAME AA
+	#define PROP_MODEL_NAME Aa
 #endif
 
 

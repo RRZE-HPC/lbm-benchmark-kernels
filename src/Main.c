@@ -468,7 +468,7 @@ int main(int argc, char * argv[])
 			int threadId = omp_get_thread_num();
 			int err;
 
-			err = PinCurrentThreadByCpuList(pinString, 0, 0, threadId);
+			err = PinCurrentThreadByCpuList(pinString, threadId);
 
 			if (err) {
 				printf("ERROR [thread %d]: pinning failed.\n", threadId);
@@ -557,9 +557,9 @@ int main(int argc, char * argv[])
 		perf, nThreads, duration, cd.MaxIterations, ld.nFluid / 1e6,
 		geometryType, kernelToUse,
 #ifdef VERIFICATION
-		"# VERIFICATION"
+		"VERIFICATION"
 #else
-		"# benchmark"
+		"B"
 #endif
 	);
 

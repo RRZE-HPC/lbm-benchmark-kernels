@@ -29,6 +29,8 @@
 #include "Memory.h"
 #include "Vtk.h"
 #include "Vector.h"
+#include "Padding.h"
+
 
 #include <math.h>
 
@@ -183,16 +185,18 @@ static void ParameterUsage()
 {
 	printf("Kernel parameters:\n");
 	printf("  [-blk <n>] [-blk-[xyz] <n>] [-n-tmp-array <n>]\n");
+	printf("  [-pad auto|modulus_1+offset_1(,modulus_n+offset_n)*]\n");
 
 	return;
 }
 
-static void ParseParameters(Parameters * params, int * blk, int * nTmpArray)
+static void ParseParameters(Parameters * params, int * blk, int * nTmpArray, PadInfo ** padInfo)
 {
 	Assert(blk != NULL);
 
 	blk[0] = 0; blk[1] = 0; blk[2] = 0;
 	*nTmpArray = 152;
+	*padInfo = NULL;
 
 	#define ARG_IS(param)                   (!strcmp(params->KernelArgs[i], param))
 	#define NEXT_ARG_PRESENT() \
@@ -210,8 +214,8 @@ static void ParseParameters(Parameters * params, int * blk, int * nTmpArray)
 
 			int tmp = strtol(params->KernelArgs[++i], NULL, 0);
 
-			if (tmp <= 0) {
-				printf("ERROR: blocking parameter must be > 0.\n");
+			if (tmp < 0) {
+				printf("ERROR: blocking parameter must be >= 0.\n");
 				exit(1);
 			}
 
@@ -222,8 +226,8 @@ static void ParseParameters(Parameters * params, int * blk, int * nTmpArray)
 
 			int tmp = strtol(params->KernelArgs[++i], NULL, 0);
 
-			if (tmp <= 0) {
-				printf("ERROR: blocking parameter must be > 0.\n");
+			if (tmp < 0) {
+				printf("ERROR: blocking parameter must be >= 0.\n");
 				exit(1);
 			}
 
@@ -234,8 +238,8 @@ static void ParseParameters(Parameters * params, int * blk, int * nTmpArray)
 
 			int tmp = strtol(params->KernelArgs[++i], NULL, 0);
 
-			if (tmp <= 0) {
-				printf("ERROR: blocking parameter must be > 0.\n");
+			if (tmp < 0) {
+				printf("ERROR: blocking parameter must be >= 0.\n");
 				exit(1);
 			}
 
@@ -246,8 +250,8 @@ static void ParseParameters(Parameters * params, int * blk, int * nTmpArray)
 
 			int tmp = strtol(params->KernelArgs[++i], NULL, 0);
 
-			if (tmp <= 0) {
-				printf("ERROR: blocking parameter must be > 0.\n");
+			if (tmp < 0) {
+				printf("ERROR: blocking parameter must be >= 0.\n");
 				exit(1);
 			}
 
@@ -269,6 +273,11 @@ static void ParseParameters(Parameters * params, int * blk, int * nTmpArray)
 			}
 
 			*nTmpArray = tmp;
+		}
+		else if (ARG_IS("-pad") || ARG_IS("--pad")) {
+			NEXT_ARG_PRESENT();
+
+			*padInfo = PadInfoFromStr(params->KernelArgs[++i]);
 		}
 		else if (ARG_IS("-h") || ARG_IS("-help") || ARG_IS("--help")) {
 			ParameterUsage();
@@ -456,6 +465,11 @@ static void FNAME(Init)(LatticeDesc * ld, KernelData ** kernelData, Parameters *
 	kdlr->nConsecThreadIndices = 0;
 #endif
 
+	int blk[3] = { 0 };
+	PadInfo * padInfo = NULL;
+
+	ParseParameters(params, blk, &kdlr->nTmpArray, &padInfo);
+
 	// Ajust the dimensions according to padding, if used.
 	kd->Dims[0] = kd->GlobalDims[0] = ld->Dims[0];
 	kd->Dims[1] = kd->GlobalDims[1] = ld->Dims[1];
@@ -471,8 +485,12 @@ static void FNAME(Init)(LatticeDesc * ld, KernelData ** kernelData, Parameters *
 	int nCells = ld->nFluid;
 	int nFluid = ld->nFluid;
 
+	{
+		nCells = PadCellsAndReport(nCells, sizeof(PdfT), &padInfo);
+		PadInfoFree(padInfo); padInfo = NULL;
+	}
+
 	// We padd each stream of a PDF array for a complete cache line.
-	// TODO: padding for L1/L2 and TLB.
 	nCells = nCells + (8 - nCells % 8);
 
 	Assert(nCells % VSIZE == 0);
@@ -481,10 +499,6 @@ static void FNAME(Init)(LatticeDesc * ld, KernelData ** kernelData, Parameters *
 	kdl->nFluid = nFluid;
 
 	PdfT * pdfs[2];
-
-	int blk[3] = { 0 };
-
-	ParseParameters(params, blk, &kdlr->nTmpArray);
 
 	if (blk[0] == 0) blk[0] = lX;
 	if (blk[1] == 0) blk[1] = lY;
@@ -572,18 +586,18 @@ static void FNAME(Init)(LatticeDesc * ld, KernelData ** kernelData, Parameters *
 
 	// Blocking is implemented via setup of the adjacency list. The kernel later will
 	// walk through the lattice blocked automatically.
-	for (int bZ = 0; bZ < lZ; bZ += blk[2]) {
-	for (int bY = 0; bY < lY; bY += blk[1]) {
 	for (int bX = 0; bX < lX; bX += blk[0]) {
+	for (int bY = 0; bY < lY; bY += blk[1]) {
+	for (int bZ = 0; bZ < lZ; bZ += blk[2]) {
 
 		int eX = MIN(bX + blk[0], lX);
 		int eY = MIN(bY + blk[1], lY);
 		int eZ = MIN(bZ + blk[2], lZ);
 
 
-		for (int z = bZ; z < eZ; ++z) {
-		for (int y = bY; y < eY; ++y) {
 		for (int x = bX; x < eX; ++x) {
+		for (int y = bY; y < eY; ++y) {
+		for (int z = bZ; z < eZ; ++z) {
 
 			latticeIndex = L_INDEX_4(lDims, x, y, z);
 
@@ -627,6 +641,15 @@ static void FNAME(Init)(LatticeDesc * ld, KernelData ** kernelData, Parameters *
 	// Loop over all fluid nodes and compute the indices to the neighboring
 	// PDFs for configured data layout (AoS/SoA).
 	// Parallelized loop to ensure correct NUMA placement.
+	#ifdef _OPENMP
+		#pragma omp parallel for
+	#endif
+	for (int index = 0; index < nFluid; ++index) {
+		for (int d = 0; d < N_D3Q19_IDX; ++d) {
+			adjList[index * N_D3Q19_IDX + d] = -1;
+		}
+	}
+
 	// #ifdef _OPENMP  --> add line continuation
 	// 	#pragma omp parallel for default(none)
 	// 		shared(nFluid, nCells, coords, D3Q19_INV, D3Q19_X, D3Q19_Y, D3Q19_Z,

@@ -28,6 +28,7 @@
 
 #include "Memory.h"
 #include "Vtk.h"
+#include "LikwidIf.h"
 
 #include <inttypes.h>
 #include <math.h>
@@ -97,6 +98,7 @@ void FNAME(D3Q19ListKernel)(LatticeDesc * ld, KernelData * kernelData, CaseData 
 	for(int iter = 0; iter < maxIterations; ++iter) {
 
 
+	X_LIKWID_START("list-os");
 
 	#ifdef _OPENMP
 		#pragma omp parallel for default(none) \
@@ -306,6 +308,8 @@ void FNAME(D3Q19ListKernel)(LatticeDesc * ld, KernelData * kernelData, CaseData 
 #endif
 			#undef I
 		} // loop over fluid nodes
+
+		X_LIKWID_STOP("list-os");
 
 		#ifdef VERIFICATION
 			kd->PdfsActive = dst;

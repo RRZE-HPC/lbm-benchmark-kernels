@@ -28,6 +28,7 @@
 
 #include "Memory.h"
 #include "Vtk.h"
+#include "Padding.h"
 
 #include <math.h>
 
@@ -200,15 +201,19 @@ static void ParameterUsage()
 {
 	printf("Kernel parameters:\n");
 	printf("  [-blk <n>] [-blk-[xyz] <n>]\n");
+#ifdef DATA_LAYOUT_SOA
+	printf("  [-pad auto|modulus_1+offset_1(,modulus_n+offset_n)*]\n");
+#endif
 
 	return;
 }
 
-static void ParseParameters(Parameters * params, int * blk)
+static void ParseParameters(Parameters * params, int * blk, PadInfo ** padInfo)
 {
 	Assert(blk != NULL);
 
 	blk[0] = 0; blk[1] = 0; blk[2] = 0;
+	*padInfo = NULL;
 
 	#define ARG_IS(param)                   (!strcmp(params->KernelArgs[i], param))
 	#define NEXT_ARG_PRESENT() \
@@ -226,8 +231,8 @@ static void ParseParameters(Parameters * params, int * blk)
 
 			int tmp = strtol(params->KernelArgs[++i], NULL, 0);
 
-			if (tmp <= 0) {
-				printf("ERROR: blocking parameter must be > 0.\n");
+			if (tmp < 0) {
+				printf("ERROR: blocking parameter must be >= 0.\n");
 				exit(1);
 			}
 
@@ -238,8 +243,8 @@ static void ParseParameters(Parameters * params, int * blk)
 
 			int tmp = strtol(params->KernelArgs[++i], NULL, 0);
 
-			if (tmp <= 0) {
-				printf("ERROR: blocking parameter must be > 0.\n");
+			if (tmp < 0) {
+				printf("ERROR: blocking parameter must be >= 0.\n");
 				exit(1);
 			}
 
@@ -250,8 +255,8 @@ static void ParseParameters(Parameters * params, int * blk)
 
 			int tmp = strtol(params->KernelArgs[++i], NULL, 0);
 
-			if (tmp <= 0) {
-				printf("ERROR: blocking parameter must be > 0.\n");
+			if (tmp < 0) {
+				printf("ERROR: blocking parameter must be >= 0.\n");
 				exit(1);
 			}
 
@@ -262,8 +267,8 @@ static void ParseParameters(Parameters * params, int * blk)
 
 			int tmp = strtol(params->KernelArgs[++i], NULL, 0);
 
-			if (tmp <= 0) {
-				printf("ERROR: blocking parameter must be > 0.\n");
+			if (tmp < 0) {
+				printf("ERROR: blocking parameter must be >= 0.\n");
 				exit(1);
 			}
 
@@ -273,6 +278,13 @@ static void ParseParameters(Parameters * params, int * blk)
 			ParameterUsage();
 			exit(1);
 		}
+#ifdef DATA_LAYOUT_SOA
+		else if (ARG_IS("-pad") || ARG_IS("--pad")) {
+			NEXT_ARG_PRESENT();
+
+			*padInfo = PadInfoFromStr(params->KernelArgs[++i]);
+		}
+#endif
 		else {
 			printf("ERROR: unknown kernel parameter.\n");
 			ParameterUsage();
@@ -324,6 +336,12 @@ void FNAME(D3Q19ListInit)(LatticeDesc * ld, KernelData ** kernelData, Parameters
 	kdl->nFluid = -1;
 #endif
 
+	int blk[3] = { 0 };
+	PadInfo * padInfo = NULL;
+
+	ParseParameters(params, blk, &padInfo);
+
+
 	// Ajust the dimensions according to padding, if used.
 	kd->Dims[0] = kd->GlobalDims[0] = ld->Dims[0];
 	kd->Dims[1] = kd->GlobalDims[1] = ld->Dims[1];
@@ -336,17 +354,20 @@ void FNAME(D3Q19ListInit)(LatticeDesc * ld, KernelData ** kernelData, Parameters
 	int lZ = lDims[2];
 
 	int nTotalCells = lX * lY * lZ;
-	int nCells = ld->nFluid; // TODO: + padding
+	int nCells = ld->nFluid;
 	int nFluid = ld->nFluid;
+
+#ifdef DATA_LAYOUT_SOA
+	{
+		nCells = PadCellsAndReport(nCells, sizeof(PdfT), &padInfo);
+		PadInfoFree(padInfo); padInfo = NULL;
+	}
+#endif
 
 	kdl->nCells = nCells;
 	kdl->nFluid = nFluid;
 
 	PdfT * pdfs[2];
-
-	int blk[3] = { 0 };
-
-	ParseParameters(params, blk);
 
 	if (blk[0] == 0) blk[0] = lX;
 	if (blk[1] == 0) blk[1] = lY;
@@ -425,18 +446,17 @@ void FNAME(D3Q19ListInit)(LatticeDesc * ld, KernelData ** kernelData, Parameters
 
 	// Blocking is implemented via setup of the adjacency list. The kernel later will
 	// walk through the lattice blocked automatically.
-	for (int bZ = 0; bZ < lZ; bZ += blk[2]) {
-	for (int bY = 0; bY < lY; bY += blk[1]) {
 	for (int bX = 0; bX < lX; bX += blk[0]) {
+	for (int bY = 0; bY < lY; bY += blk[1]) {
+	for (int bZ = 0; bZ < lZ; bZ += blk[2]) {
 
 		int eX = MIN(bX + blk[0], lX);
 		int eY = MIN(bY + blk[1], lY);
 		int eZ = MIN(bZ + blk[2], lZ);
 
-
-		for (int z = bZ; z < eZ; ++z) {
-		for (int y = bY; y < eY; ++y) {
 		for (int x = bX; x < eX; ++x) {
+		for (int y = bY; y < eY; ++y) {
+		for (int z = bZ; z < eZ; ++z) {
 
 			latticeIndex = L_INDEX_4(lDims, x, y, z);
 
@@ -474,7 +494,15 @@ void FNAME(D3Q19ListInit)(LatticeDesc * ld, KernelData ** kernelData, Parameters
 
 	// Loop over all fluid nodes and compute the indices to the neighboring
 	// PDFs for configured data layout (AoS/SoA).
-	// TODO: Parallelized loop to ensure correct NUMA placement.
+	#ifdef _OPENMP
+		#pragma omp parallel for
+	#endif
+	for (int index = 0; index < nFluid; ++index) {
+		for (int d = 0; d < N_D3Q19_IDX; ++d) {
+			adjList[index * N_D3Q19_IDX + d] = -1;
+		}
+	}
+
 	// #ifdef _OPENMP  --> add line continuation
 	// 	#pragma omp parallel for default(none)
 	// 		shared(nFluid, nCells, coords, D3Q19_INV, D3Q19_X, D3Q19_Y, D3Q19_Z,

@@ -74,5 +74,6 @@ static inline int L_INDEX_4(int dims[3], int x, int y, int z)
 	return z * dims[0] * dims[1] + y * dims[0] + x;
 }
 
+void LatDumpAscii(LatticeDesc * ld, int zStart, int zStop);
 
 #endif // __LATTICE_H__

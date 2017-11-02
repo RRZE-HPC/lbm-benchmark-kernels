@@ -34,5 +34,5 @@ main: main.rst
 #main.css
 	[ -d html ] || mkdir -p html
 #    rst2html --stylesheet=html4css1.css,main.css $< html/$@.html
-	rst2html --stylesheet=html4css1.css $< html/$@.html
+	rst2html --stylesheet=html4css1.css,main.css $< html/$@.html
 

@@ -1,0 +1,46 @@
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: sans-serif;
+  font-size: 100%;
+  background-color: #dcdcdc;
+}
+
+h1.title {
+  background-color: gray;
+  color: white
+}
+
+table.footnote {
+  padding-left: 0.5ex;
+}
+
+table.citation {
+  padding-left: 0.5ex
+}
+
+td.label {
+  width: 10%;
+}
+
+table, table.docutils, td, th {
+  border: 0;
+}
+
+table.citation, table.footnote {
+  width: 100%;
+}
+
+th {
+    background-color: lavender ;
+}
+
+tr:nth-child(even) {
+    xxbackground-color: aliceblue;
+    background-color: white; 
+}
+tr:nth-child(odd) {
+    xxbackground-color: lavender;
+    background-color: whitesmoke;
+}
+
+

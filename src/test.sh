@@ -54,7 +54,7 @@ Config="$1"
 
 make clean-all
 make -j CONFIG=$Config TAG=$XTag-debug
-make -j CONFIG=$Config BUILD=$Build TAG=$XTag-v
+make -j CONFIG=$Config BUILD=$Build TAG=$XTag-v VERIFICATION=on
 make -j CONFIG=$Config BUILD=$Build TAG=$XTag-b BENCHMARK=on
 
 BinaryV="../bin/lbmbenchk-$Config-$Build$XTag-v"

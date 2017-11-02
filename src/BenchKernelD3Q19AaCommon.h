@@ -24,17 +24,20 @@
 //  along with LbmBenchKernels.  If not, see <http://www.gnu.org/licenses/>.
 //
 // --------------------------------------------------------------------------
-#ifndef __BENCH_KERNEL_D3Q19_COMMON_H__
-#define __BENCH_KERNEL_D3Q19_COMMON_H__
+#ifndef __BENCH_KERNEL_D3Q19_AA_COMMON_H__
+#define __BENCH_KERNEL_D3Q19_AA_COMMON_H__
 
 #include "Kernel.h"
 
-typedef struct KernelDataEx_
+typedef struct KernelDataAa_
 {
 	KernelData kd;
 	int Blk[3];			// Blocking in X, Y, and Z direction, value of 0 disables blocking.
-} KernelDataEx;
+	int Iteration;		// Current iteration number.
+} KernelDataAa;
 
+// Macro for casting KernelData * to KernelDataAa *.
+#define KDA(_x_)	((KernelDataAa *)(_x_))
 
 // Build a function name extended by the propagation model name and the data layout.
 // FNANEM(test) will be expanded to test_PushSoA if DATA_LAYOUT_NAME is defined
@@ -82,5 +85,5 @@ static inline int FNAME(PINDEX5)(int dims[3], int x, int y, int z, int d)
 #endif
 }
 
-#endif // __BENCH_KERNEL_D3Q19_COMMON_H__
+#endif // __BENCH_KERNEL_D3Q19_AA_COMMON_H__
 

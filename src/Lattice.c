@@ -24,21 +24,36 @@
 //  along with LbmBenchKernels.  If not, see <http://www.gnu.org/licenses/>.
 //
 // --------------------------------------------------------------------------
-#ifndef __PINNING_H__
-#define __PINNING_H__
+#include "Lattice.h"
 
+// Dumps the layers [zStart, zStop] of lattice as ASCII.
+// Specify zStart = -1 and zStop = -1 as begin/end of lattice.
 
-int PinCurrentThreadToCore(int coreNumber);
+void LatDumpAscii(LatticeDesc * ld, int zStart, int zStop)
+{
+	Assert(ld != NULL);
 
-int PinParseCpuList(const char * cpuList, int threadNumber);
+	const char strLatCellType[] = "X.IxO"; // X = Obstacle, . = Fluid, I = inlet, O = outlet
 
-int PinCurrentThreadByEnvVar(const char * envVarName, int threadNumber);
+	int localZStart = zStart;
+	int localZStop  = zStop;
 
-int PinCurrentThreadByCpuList(const char * cpuList, int threadNumber);
+	int * dims = ld->Dims;
+	LatticeT * lattice = ld->Lattice;
 
-int PinCurrentCore();
+	if (localZStart == -1) localZStart = 0;
+	if (localZStop  == -1) localZStop  = dims[2] - 1;
 
-char * PinCpuListAsString();
+	for (int z = localZStop; z >= localZStart; --z) {
+		printf("plane % 2d\n", z);
 
+		for (int y = dims[1] - 1; y >= 0; --y) {
+			printf(" %2d  ", y);
+			for (int x = 0; x < dims[0]; ++x) {
+				printf("%c", strLatCellType[lattice[L_INDEX_4(dims, x, y, z)]]);
+			}
+			printf("\n");
+		}
+	}
+}
 
-#endif // __PINNING_H__

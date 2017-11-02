@@ -28,6 +28,8 @@
 #define __KERNEL_FUNCTIONS_H__
 
 #include "BenchKernelD3Q19.h"
+#include "BenchKernelD3Q19Aa.h"
+#include "BenchKernelD3Q19AaVec.h"
 #include "BenchKernelD3Q19List.h"
 #include "BenchKernelD3Q19ListAa.h"
 #include "BenchKernelD3Q19ListAaRia.h"
@@ -133,6 +135,22 @@ KernelFunctions g_kernels[] =
 		.Init   = D3Q19BlkInit_PullAoS,
 		.Deinit = D3Q19BlkDeinit_PullAoS
 	},
+	{
+		.Name	= "aa-aos",
+		.Init	= D3Q19AaInit_AaAoS,
+		.Deinit	= D3Q19AaDeinit_AaAoS
+	},
+	{
+		.Name	= "aa-soa",
+		.Init	= D3Q19AaInit_AaSoA,
+		.Deinit	= D3Q19AaDeinit_AaSoA
+	},
+	{
+		.Name	= "aa-vec-soa",
+		.Init	= D3Q19AaVecInit_AaSoA,
+		.Deinit	= D3Q19AaVecDeinit_AaSoA
+	}
+
 };
 
 #endif // __KERNEL_FUNCTIONS_H__

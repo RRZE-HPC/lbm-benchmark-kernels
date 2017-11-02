@@ -72,6 +72,9 @@ void GeoCreateByStr(const char * geometryType, int dims[3], int periodic[3], Lat
 
 		typeDetails = &tmp;
 	}
+	else if (strncasecmp("fluid", geometryType, 5) == 0) {
+		type = GEO_TYPE_FLUID;
+	}
 	else {
 		printf("ERROR: unknown geometry specified.\n");
 		Verify(0);
@@ -99,7 +102,7 @@ void GeoCreateByType(GEO_TYPES type, void * typeDetails, int dims[3], int period
 	Assert(type >= GEO_TYPE_MIN);
 	Assert(type <= GEO_TYPE_MAX);
 
-	const char * geoTypeStr[] = { "box", "channel", "pipe", "blocks" };
+	const char * geoTypeStr[] = { "box", "channel", "pipe", "blocks", "fluid" };
 
 	printf("# geometry: %d x %d x %d nodes, type %d %s\n", dims[0], dims[1], dims[2], type, geoTypeStr[type]);
 
@@ -126,6 +129,10 @@ void GeoCreateByType(GEO_TYPES type, void * typeDetails, int dims[3], int period
 
 	if (type == GEO_TYPE_CHANNEL || type == GEO_TYPE_BLOCKS || type == GEO_TYPE_PIPE) {
 		periodic[0] = 1;
+	}
+	else if (type == GEO_TYPE_FLUID) {
+		// Actually this geometry is non-periodic, but we need fluid at the boundary.
+		periodic[0] = 1; periodic[1] = 1; periodic[2] = 1;
 	}
 
 	// Walls or periodic on first and last x plane.
@@ -168,7 +175,7 @@ void GeoCreateByType(GEO_TYPES type, void * typeDetails, int dims[3], int period
 	}
 
 	if (type == GEO_TYPE_CHANNEL) {
-		periodic[0] = 1;
+		// Nothing todo here.
 	}
 	else if (type == GEO_TYPE_PIPE) {
 		#define SQR(a) ((a)*(a))
@@ -192,34 +199,38 @@ void GeoCreateByType(GEO_TYPES type, void * typeDetails, int dims[3], int period
 
 		int blockSize = *((int *)typeDetails);
 
+#if 0
 		if (blockSize == 0) {
 			blockSize = 8;
 		}
+#endif
+		if (blockSize > 0) {
 
-		int dimMin = dims[0];
+			int dimMin = dims[0];
 
-		if (dims[1] < dimMin) dimMin = dims[1];
-		if (dims[2] < dimMin) dimMin = dims[2];
+			if (dims[1] < dimMin) dimMin = dims[1];
+			if (dims[2] < dimMin) dimMin = dims[2];
 
-		if (blockSize < 0 || blockSize > dimMin / 2) {
-			printf("ERROR: block size for geometry must be > 0 and smaller than half of the smalest dimension.\n");
-			// TODO: find a better solution for handling errors in here.
-			Verify(0);
-		}
+			if (blockSize < 0 || blockSize > dimMin / 2) {
+				printf("ERROR: block size for geometry must be > 0 and smaller than half of the smalest dimension.\n");
+				// TODO: find a better solution for handling errors in here.
+				Verify(0);
+			}
 
-		// Number of blocks in x, y, and z direction.
-		int nbx = blockSize, nby = blockSize, nbz = blockSize;
+			// Number of blocks in x, y, and z direction.
+			int nbx = blockSize, nby = blockSize, nbz = blockSize;
 
-		for (int z = 0; z < dims[2]; ++z) {
-				if ((z % (2 * nbz)) < nbz) continue;
+			for (int z = 0; z < dims[2]; ++z) {
+					if ((z % (2 * nbz)) < nbz) continue;
 
-			for (int y = 0; y < dims[1]; ++y) {
-				if ((y % (2 * nby)) < nby) continue;
+				for (int y = 0; y < dims[1]; ++y) {
+					if ((y % (2 * nby)) < nby) continue;
 
-				for (int x = 0; x < dims[0]; ++x) {
+					for (int x = 0; x < dims[0]; ++x) {
 
-					if ((x % (2 * nbx)) >= nbx) {
-						lattice[L_INDEX_4(dims, x, y, z)] 	= LAT_CELL_OBSTACLE;
+						if ((x % (2 * nbx)) >= nbx) {
+							lattice[L_INDEX_4(dims, x, y, z)] 	= LAT_CELL_OBSTACLE;
+						}
 					}
 				}
 			}
