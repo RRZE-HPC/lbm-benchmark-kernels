@@ -1,9 +1,15 @@
 Lattice Boltzmann Benchmark Kernels
 ===================================
 
-Simple benchmark suite for LBM kernels and performance experiments from the HPC
-group of Erlangen Regional Computing Center (RRZE/HPC) [1] and the Chair for
-System Simulation of FAU (LSS) [2].
+The lattice Boltzmann (LBM) benchmark kernels are a collection of LBM kernel
+implementations.
+
+AS SUCH THE LBM BENCHMARK KERNELS ARE NO FULLY EQUIPPED CFD SOLVER AND SOLELY
+SERVE THE PURPOSE OF STUDYING POSSIBLE PERFORMANCE OPTIMIZATIONS AND/OR
+EXPERIMENTS.
+
+The benchmark suite was created by the HPC group of Erlangen Regional Computing
+Center (RRZE/HPC) [1] and the Chair for System Simulation of FAU (LSS) [2].
 
 See doc/main.rst or doc/html/main.html subdirectories for rudimentary
 documentation.
@@ -12,6 +18,7 @@ documentation.
 
 LICENCE
 -------
+
 LBM benchmark kernels are licensed under GPLv3.
 
 See licence of src/BoostJoin.h in the top of src/BoostJoin.h, which stems from
