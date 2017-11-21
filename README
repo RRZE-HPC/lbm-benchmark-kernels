@@ -1,34 +1,34 @@
-# --------------------------------------------------------------------------
-#
-# Copyright
-#   Markus Wittmann, 2016-2017
-#   RRZE, University of Erlangen-Nuremberg, Germany
-#   markus.wittmann -at- fau.de or hpc -at- rrze.fau.de
-#
-#   Viktor Haag, 2016
-#   LSS, University of Erlangen-Nuremberg, Germany
-#
-#  This file is part of the Lattice Boltzmann Benchmark Kernels (LbmBenchKernels).
-#
-#  LbmBenchKernels is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  LbmBenchKernels is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with LbmBenchKernels.  If not, see <http://www.gnu.org/licenses/>.
-#
-# --------------------------------------------------------------------------
+Lattice Boltzmann Benchmark Kernels
+===================================
 
-# See licence of src/BoostJoin.h in the top of src/BoostJoin.h, which stems from
-# the boost projects and is licenced under the Boost licence.
+Simple benchmark suite for LBM kernels and performance experiments from the HPC
+group of Erlangen Regional Computing Center (RRZE/HPC) [1] and the Chair for
+System Simulation of FAU (LSS) [2].
 
-See doc subdirectory for a rudimentary documentation.
+See doc/main.rst or doc/html/main.html subdirectories for rudimentary
+documentation.
 
-This work was funded by BMBF, grant no. 01IH15003A (project SKAMPY)
-This work was funded by KONWHIR project OMI4PAPS
+
+
+LICENCE
+-------
+LBM benchmark kernels are licensed under GPLv3.
+
+See licence of src/BoostJoin.h in the top of src/BoostJoin.h, which stems from
+the boost projects and is licenced under the Boost licence.
+
+
+
+ACKNOWLEDGEMENTS
+----------------
+
+This work was funded by:
+
+  - BMBF, grant no. 01IH15003A (project SKAMPY)
+  - KONWHIR project OMI4PAPS
+
+
+[1] https://hpc.fau.de/
+[2] https://www10.informatik.uni-erlangen.de/en/
+
+

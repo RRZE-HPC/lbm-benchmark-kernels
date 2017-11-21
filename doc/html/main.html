@@ -420,42 +420,66 @@ tr:nth-child(odd) {
 <div class="contents topic" id="contents">
 <p class="topic-title first">Contents</p>
 <ul class="auto-toc simple">
-<li><a class="reference internal" href="#compilation" id="id2">1&nbsp;&nbsp;&nbsp;Compilation</a><ul class="auto-toc">
-<li><a class="reference internal" href="#debug-and-verification" id="id3">1.1&nbsp;&nbsp;&nbsp;Debug and Verification</a></li>
-<li><a class="reference internal" href="#benchmarking" id="id4">1.2&nbsp;&nbsp;&nbsp;Benchmarking</a></li>
-<li><a class="reference internal" href="#release-and-verification" id="id5">1.3&nbsp;&nbsp;&nbsp;Release and Verification</a></li>
-<li><a class="reference internal" href="#compilers" id="id6">1.4&nbsp;&nbsp;&nbsp;Compilers</a></li>
-<li><a class="reference internal" href="#cleaning" id="id7">1.5&nbsp;&nbsp;&nbsp;Cleaning</a></li>
-<li><a class="reference internal" href="#options-summary" id="id8">1.6&nbsp;&nbsp;&nbsp;Options Summary</a></li>
+<li><a class="reference internal" href="#introduction" id="id5">1&nbsp;&nbsp;&nbsp;Introduction</a></li>
+<li><a class="reference internal" href="#compilation" id="id6">2&nbsp;&nbsp;&nbsp;Compilation</a><ul class="auto-toc">
+<li><a class="reference internal" href="#debug-and-verification" id="id7">2.1&nbsp;&nbsp;&nbsp;Debug and Verification</a></li>
+<li><a class="reference internal" href="#release-and-verification" id="id8">2.2&nbsp;&nbsp;&nbsp;Release and Verification</a></li>
+<li><a class="reference internal" href="#benchmarking" id="id9">2.3&nbsp;&nbsp;&nbsp;Benchmarking</a></li>
+<li><a class="reference internal" href="#compilers" id="id10">2.4&nbsp;&nbsp;&nbsp;Compilers</a></li>
+<li><a class="reference internal" href="#cleaning" id="id11">2.5&nbsp;&nbsp;&nbsp;Cleaning</a></li>
+<li><a class="reference internal" href="#options-summary" id="id12">2.6&nbsp;&nbsp;&nbsp;Options Summary</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#invocation" id="id9">2&nbsp;&nbsp;&nbsp;Invocation</a><ul class="auto-toc">
-<li><a class="reference internal" href="#command-line-parameters" id="id10">2.1&nbsp;&nbsp;&nbsp;Command Line Parameters</a></li>
-<li><a class="reference internal" href="#kernels" id="id11">2.2&nbsp;&nbsp;&nbsp;Kernels</a></li>
+<li><a class="reference internal" href="#invocation" id="id13">3&nbsp;&nbsp;&nbsp;Invocation</a><ul class="auto-toc">
+<li><a class="reference internal" href="#command-line-parameters" id="id14">3.1&nbsp;&nbsp;&nbsp;Command Line Parameters</a></li>
+<li><a class="reference internal" href="#kernels" id="id15">3.2&nbsp;&nbsp;&nbsp;Kernels</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#id1" id="id12">3&nbsp;&nbsp;&nbsp;Benchmarking</a><ul class="auto-toc">
-<li><a class="reference internal" href="#padding" id="id13">3.1&nbsp;&nbsp;&nbsp;Padding</a></li>
+<li><a class="reference internal" href="#id2" id="id16">4&nbsp;&nbsp;&nbsp;Benchmarking</a><ul class="auto-toc">
+<li><a class="reference internal" href="#intel-compiler" id="id17">4.1&nbsp;&nbsp;&nbsp;Intel Compiler</a></li>
+<li><a class="reference internal" href="#pinning" id="id18">4.2&nbsp;&nbsp;&nbsp;Pinning</a></li>
+<li><a class="reference internal" href="#general-remarks" id="id19">4.3&nbsp;&nbsp;&nbsp;General Remarks</a></li>
+<li><a class="reference internal" href="#padding" id="id20">4.4&nbsp;&nbsp;&nbsp;Padding</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#geometries" id="id14">4&nbsp;&nbsp;&nbsp;Geometries</a></li>
-<li><a class="reference internal" href="#results" id="id15">5&nbsp;&nbsp;&nbsp;Results</a></li>
-<li><a class="reference internal" href="#licence" id="id16">6&nbsp;&nbsp;&nbsp;Licence</a></li>
-<li><a class="reference internal" href="#acknowledgements" id="id17">7&nbsp;&nbsp;&nbsp;Acknowledgements</a></li>
+<li><a class="reference internal" href="#geometries" id="id21">5&nbsp;&nbsp;&nbsp;Geometries</a></li>
+<li><a class="reference internal" href="#performance-results" id="id22">6&nbsp;&nbsp;&nbsp;Performance Results</a><ul class="auto-toc">
+<li><a class="reference internal" href="#haswell-intel-xeon-e5-2695-v3" id="id23">6.1&nbsp;&nbsp;&nbsp;Haswell, Intel Xeon E5-2695 v3</a></li>
+<li><a class="reference internal" href="#broadwell-intel-xeon-e5-2630-v4" id="id24">6.2&nbsp;&nbsp;&nbsp;Broadwell, Intel Xeon E5-2630 v4</a></li>
+<li><a class="reference internal" href="#skylake-intel-xeon-gold-6148" id="id25">6.3&nbsp;&nbsp;&nbsp;Skylake, Intel Xeon Gold 6148</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#licence" id="id26">7&nbsp;&nbsp;&nbsp;Licence</a></li>
+<li><a class="reference internal" href="#acknowledgements" id="id27">8&nbsp;&nbsp;&nbsp;Acknowledgements</a></li>
+<li><a class="reference internal" href="#bibliography" id="id28">9&nbsp;&nbsp;&nbsp;Bibliography</a></li>
 </ul>
 </div>
+<div class="section" id="introduction">
+<h1><a class="toc-backref" href="#id5">1&nbsp;&nbsp;&nbsp;Introduction</a></h1>
+<p>The lattice Boltzmann (LBM) benchmark kernels are a collection of LBM kernel
+implementations.</p>
+<p><strong>AS SUCH THE LBM BENCHMARK KERNELS ARE NO FULLY EQUIPPED CFD SOLVER AND SOLELY
+SERVES THE PURPOSE OF STUDYING POSSIBLE PERFORMANCE OPTIMIZATIONS AND/OR
+EXPERIMENTS.</strong></p>
+<p>Currently all kernels utilize a D3Q19 discretization and the
+two-relaxation-time (TRT) collision operator <a class="citation-reference" href="#ginzburg-2008" id="id1">[ginzburg-2008]</a>.
+All operations are carried out in double precision arithmetic.</p>
+</div>
 <div class="section" id="compilation">
-<h1><a class="toc-backref" href="#id2">1&nbsp;&nbsp;&nbsp;Compilation</a></h1>
+<h1><a class="toc-backref" href="#id6">2&nbsp;&nbsp;&nbsp;Compilation</a></h1>
 <p>The benchmark framework currently supports only Linux systems and the GCC and
 Intel compilers. Every other configuration probably requires adjustment inside
-the code and the makefiles. Further some code might be platform or at least
+the code and the makefiles. Furthermore some code might be platform or at least
 POSIX specific.</p>
 <p>The benchmark can be build via <tt class="docutils literal">make</tt> from the <tt class="docutils literal">src</tt> subdirectory. This will
 generate one binary which hosts all implemented benchmark kernels.</p>
 <p>Binaries are located under the <tt class="docutils literal">bin</tt> subdirectory and will have different names
 depending on compiler and build configuration.</p>
+<p>Compilation can target debug or release builds. Combined with both build types
+verification can be enabled, which increases the runtime and hence is not
+suited for benchmarking.</p>
 <div class="section" id="debug-and-verification">
-<h2><a class="toc-backref" href="#id3">1.1&nbsp;&nbsp;&nbsp;Debug and Verification</a></h2>
+<h2><a class="toc-backref" href="#id7">2.1&nbsp;&nbsp;&nbsp;Debug and Verification</a></h2>
 <pre class="literal-block">
 make BUILD=debug BENCHMARK=off
 </pre>
@@ -470,32 +494,34 @@ binary will be found in the <tt class="docutils literal">bin</tt> subdirectory a
 <p>Please note that the generated binary will therefore
 exhibit a poor performance.</p>
 </div>
-<div class="section" id="benchmarking">
-<h2><a class="toc-backref" href="#id4">1.2&nbsp;&nbsp;&nbsp;Benchmarking</a></h2>
-<p>To generate a binary for benchmarking run make with</p>
-<pre class="literal-block">
-make
-</pre>
-<p>As default <tt class="docutils literal">BENCHMARK=on</tt> and <tt class="docutils literal">BUILD=release</tt> is set, where
-BUILD=release turns optimizations on and <tt class="docutils literal">BENCHMARK=on</tt> disables
-verfification, statistics, and VTK output.</p>
-</div>
 <div class="section" id="release-and-verification">
-<h2><a class="toc-backref" href="#id5">1.3&nbsp;&nbsp;&nbsp;Release and Verification</a></h2>
+<h2><a class="toc-backref" href="#id8">2.2&nbsp;&nbsp;&nbsp;Release and Verification</a></h2>
 <p>Verification with the debug builds can be extremely slow. Hence verification
 capabilities can be build with release builds:</p>
 <pre class="literal-block">
 make BENCHMARK=off
 </pre>
 </div>
+<div class="section" id="benchmarking">
+<h2><a class="toc-backref" href="#id9">2.3&nbsp;&nbsp;&nbsp;Benchmarking</a></h2>
+<p>To generate a binary for benchmarking run make with</p>
+<pre class="literal-block">
+make
+</pre>
+<p>As default <tt class="docutils literal">BENCHMARK=on</tt> and <tt class="docutils literal">BUILD=release</tt> is set, where
+<tt class="docutils literal">BUILD=release</tt> turns optimizations on and <tt class="docutils literal">BENCHMARK=on</tt> disables
+verfification, statistics, and VTK output.</p>
+<p>See Options Summary below for further description of options which can be
+applied, e.g. TARCH as well as the Benchmarking section.</p>
+</div>
 <div class="section" id="compilers">
-<h2><a class="toc-backref" href="#id6">1.4&nbsp;&nbsp;&nbsp;Compilers</a></h2>
+<h2><a class="toc-backref" href="#id10">2.4&nbsp;&nbsp;&nbsp;Compilers</a></h2>
 <p>Currently only the GCC and Intel compiler under Linux are supported. Between
 both configuration can be chosen via <tt class="docutils literal"><span class="pre">CONFIG=linux-gcc</span></tt> or
 <tt class="docutils literal"><span class="pre">CONFIG=linux-intel</span></tt>.</p>
 </div>
 <div class="section" id="cleaning">
-<h2><a class="toc-backref" href="#id7">1.5&nbsp;&nbsp;&nbsp;Cleaning</a></h2>
+<h2><a class="toc-backref" href="#id11">2.5&nbsp;&nbsp;&nbsp;Cleaning</a></h2>
 <p>For each configuration and build (debug/release) a subdirectory under the
 <tt class="docutils literal">src/obj</tt> directory is created where the dependency and object files are
 stored.
@@ -510,21 +536,23 @@ make clean-all
 <p>all object and dependency files are deleted.</p>
 </div>
 <div class="section" id="options-summary">
-<h2><a class="toc-backref" href="#id8">1.6&nbsp;&nbsp;&nbsp;Options Summary</a></h2>
-<p>Options that can be specified when building the framework with make:</p>
+<h2><a class="toc-backref" href="#id12">2.6&nbsp;&nbsp;&nbsp;Options Summary</a></h2>
+<p>Options that can be specified when building the suite with make:</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="8%" />
-<col width="13%" />
 <col width="7%" />
-<col width="72%" />
+<col width="12%" />
+<col width="6%" />
+<col width="75%" />
 </colgroup>
-<tbody valign="top">
-<tr><td>name</td>
-<td>values</td>
-<td>default</td>
-<td>description</td>
+<thead valign="bottom">
+<tr><th class="head">name</th>
+<th class="head">values</th>
+<th class="head">default</th>
+<th class="head">description</th>
 </tr>
+</thead>
+<tbody valign="top">
 <tr><td>BENCHMARK</td>
 <td>on, off</td>
 <td>on</td>
@@ -533,7 +561,7 @@ make clean-all
 <tr><td>BUILD</td>
 <td>debug, release</td>
 <td>release</td>
-<td>No optimization, debug symbols, DEBUG defined.</td>
+<td>debug: no optimization, debug symbols, DEBUG defined. release: optimizations enabled.</td>
 </tr>
 <tr><td>CONFIG</td>
 <td>linux-gcc, linux-intel</td>
@@ -543,7 +571,7 @@ make clean-all
 <tr><td>ISA</td>
 <td>avx, sse</td>
 <td>avx</td>
-<td>Determines which ISA extension is used for macro definitions. This is <em>not</em> the architecture the compiler generates code for.</td>
+<td>Determines which ISA extension is used for macro definitions of the intrinsics. This is <em>not</em> the architecture the compiler generates code for.</td>
 </tr>
 <tr><td>OPENMP</td>
 <td>on, off</td>
@@ -575,7 +603,7 @@ make clean-all
 </div>
 </div>
 <div class="section" id="invocation">
-<h1><a class="toc-backref" href="#id9">2&nbsp;&nbsp;&nbsp;Invocation</a></h1>
+<h1><a class="toc-backref" href="#id13">3&nbsp;&nbsp;&nbsp;Invocation</a></h1>
 <p>Running the binary will print among the GPL licence header a line like the following:</p>
 <pre class="literal-block">
 LBM Benchmark Kernels 0.1, compiled Jul  5 2017 21:59:22, type: verification
@@ -586,7 +614,7 @@ LBM Benchmark Kernels 0.1, compiled Jul  5 2017 21:59:22, type: benchmark
 </pre>
 <p>if verfication was disabled during compilation.</p>
 <div class="section" id="command-line-parameters">
-<h2><a class="toc-backref" href="#id10">2.1&nbsp;&nbsp;&nbsp;Command Line Parameters</a></h2>
+<h2><a class="toc-backref" href="#id14">3.1&nbsp;&nbsp;&nbsp;Command Line Parameters</a></h2>
 <p>Running the binary with <tt class="docutils literal"><span class="pre">-h</span></tt> list all available parameters:</p>
 <pre class="literal-block">
 Usage:
@@ -613,7 +641,7 @@ iterations, etc, which can afterward be override, e.g.:</p>
 <pre class="literal-block">
 $ bin/lbmbenchk-linux-intel-release -verfiy -dims 32x32x32
 </pre>
-<p>Kernel specific parameters can be opatained via selecting the specific kernel
+<p>Kernel specific parameters can be obtained via selecting the specific kernel
 and passing <tt class="docutils literal"><span class="pre">-h</span></tt> as parameter:</p>
 <pre class="literal-block">
 $ bin/lbmbenchk-linux-intel-release -kernel kernel-name -- -h
@@ -651,7 +679,7 @@ Available kernels to benchmark:
 </pre>
 </div>
 <div class="section" id="kernels">
-<h2><a class="toc-backref" href="#id11">2.2&nbsp;&nbsp;&nbsp;Kernels</a></h2>
+<h2><a class="toc-backref" href="#id15">3.2&nbsp;&nbsp;&nbsp;Kernels</a></h2>
 <p>The following list shortly describes available kernels:</p>
 <ul class="simple">
 <li>push-soa/push-aos/pull-soa/pull-aos:
@@ -862,8 +890,8 @@ during each run.</p>
 </table>
 </div>
 </div>
-<div class="section" id="id1">
-<h1><a class="toc-backref" href="#id12">3&nbsp;&nbsp;&nbsp;Benchmarking</a></h1>
+<div class="section" id="id2">
+<h1><a class="toc-backref" href="#id16">4&nbsp;&nbsp;&nbsp;Benchmarking</a></h1>
 <p>Correct benchmarking is a nontrivial task. Whenever benchmark results should be
 created make sure the binary was compiled with:</p>
 <ul class="simple">
@@ -872,12 +900,43 @@ created make sure the binary was compiled with:</p>
 <li>the correct ISA for macros is used, selected via <tt class="docutils literal">ISA</tt> and</li>
 <li>use <tt class="docutils literal">TARCH</tt> to specify the architecture the compiler generates code for.</li>
 </ul>
+<div class="section" id="intel-compiler">
+<h2><a class="toc-backref" href="#id17">4.1&nbsp;&nbsp;&nbsp;Intel Compiler</a></h2>
+<p>For the Intel compiler one can specify depending on the target ISA extension:</p>
+<ul class="simple">
+<li>AVX:          <tt class="docutils literal"><span class="pre">TARCH=-xAVX</span></tt></li>
+<li>AVX2 and FMA: <tt class="docutils literal"><span class="pre">TARCH=-xCORE-AVX2,-fma</span></tt></li>
+<li>AVX512:       <tt class="docutils literal"><span class="pre">TARCH=-xCORE-AVX512</span></tt></li>
+<li>KNL:          <tt class="docutils literal"><span class="pre">TARCH=-xMIC-AVX512</span></tt></li>
+</ul>
+<p>Compiling for an architecture supporting AVX (Sandy Bridge, Ivy Bridge):</p>
+<pre class="literal-block">
+make ISA=avx TARCH=-xAVX
+</pre>
+<p>Compiling for an architecture supporting AVX2 (Haswell, Broadwell):</p>
+<pre class="literal-block">
+make ISA=avx TARCH=-xCORE-AVX2,-fma
+</pre>
+<p>WARNING: ISA is here still set to <tt class="docutils literal">avx</tt> as currently we have the FMA intrinsics not
+implemented. This might change in the future.</p>
+<p>Compiling for an architecture supporting AVX-512 (Skylake):</p>
+<pre class="literal-block">
+make ISA=avx TARCH=-xCORE-AVX512
+</pre>
+<p>WARNING: ISA is here still set to <tt class="docutils literal">avx</tt> as currently we have no implementation for the
+AVX512 intrinsics. This might change in the future.</p>
+</div>
+<div class="section" id="pinning">
+<h2><a class="toc-backref" href="#id18">4.2&nbsp;&nbsp;&nbsp;Pinning</a></h2>
 <p>During benchmarking pinning should be used via the <tt class="docutils literal"><span class="pre">-pin</span></tt> parameter. Running
-a benchmark with 10 threads an pin them to the first 10 cores works like</p>
+a benchmark with 10 threads and pin them to the first 10 cores works like</p>
 <pre class="literal-block">
 $ bin/lbmbenchk-linux-intel-release ... -t 10 -pin $(seq -s , 0 9)
 </pre>
-<p>Things the binary does nor check or controll:</p>
+</div>
+<div class="section" id="general-remarks">
+<h2><a class="toc-backref" href="#id19">4.3&nbsp;&nbsp;&nbsp;General Remarks</a></h2>
+<p>Things the binary does nor check or control:</p>
 <ul class="simple">
 <li>transparent huge pages: when allocating memory small 4 KiB pages might be
 replaced with larger ones. This is in general a good thing, but if this is
@@ -895,7 +954,7 @@ means the memory will be placed at the NUMA domain the touching core is
 associated with. If a different policy is in place or the NUMA domain to be
 used is already full memory might be allocated in a remote domain. Accesses
 to remote domains typically have a higher latency and lower bandwidth.</li>
-<li>System load: interference with other application, espcially on desktop
+<li>System load: interference with other application, especially on desktop
 systems should be avoided.</li>
 <li>Padding: For SoA based kernels the number of (fluid) nodes is automatically
 adjusted so that no cache or TLB thrashing should occur. The parameters are
@@ -905,8 +964,9 @@ padding section.</li>
 function for different ISA extensions. Make sure the code you might think is
 executed is actually the code which is executed.</li>
 </ul>
+</div>
 <div class="section" id="padding">
-<h2><a class="toc-backref" href="#id13">3.1&nbsp;&nbsp;&nbsp;Padding</a></h2>
+<h2><a class="toc-backref" href="#id20">4.4&nbsp;&nbsp;&nbsp;Padding</a></h2>
 <p>With correct padding cache and TLB thrashing can be avoided. Therefore the
 number of (fluid) nodes used in the data layout is artificially increased.</p>
 <p>Currently automatic padding is active for kernels which support it. It can be
@@ -938,22 +998,912 @@ like <tt class="docutils literal"><span class="pre">-pad</span> 0+16</tt> would 
 </div>
 </div>
 <div class="section" id="geometries">
-<h1><a class="toc-backref" href="#id14">4&nbsp;&nbsp;&nbsp;Geometries</a></h1>
-<p>TODO: supported geometries: channel, pipe, blocks</p>
+<h1><a class="toc-backref" href="#id21">5&nbsp;&nbsp;&nbsp;Geometries</a></h1>
+<p>TODO: supported geometries: channel, pipe, blocks, fluid</p>
 </div>
-<div class="section" id="results">
-<h1><a class="toc-backref" href="#id15">5&nbsp;&nbsp;&nbsp;Results</a></h1>
-<p>TODO</p>
+<div class="section" id="performance-results">
+<h1><a class="toc-backref" href="#id22">6&nbsp;&nbsp;&nbsp;Performance Results</a></h1>
+<p>The sections lists performance values measured on several machines for
+different kernels and geometries.
+The <strong>RFM</strong> column denotes the expected performance as predicted by the
+Roofline performance model <a class="citation-reference" href="#williams-2008" id="id3">[williams-2008]</a>.
+For performance prediction of each kernel a memory bandwidth benchmark is used
+which mimics the kernels memory access pattern and the kernel's loop balance
+(see <a class="citation-reference" href="#kernels" id="id4">[kernels]</a> for details).</p>
+<div class="section" id="haswell-intel-xeon-e5-2695-v3">
+<h2><a class="toc-backref" href="#id23">6.1&nbsp;&nbsp;&nbsp;Haswell, Intel Xeon E5-2695 v3</a></h2>
+<ul class="simple">
+<li>Haswell architecture, AVX2, FMA</li>
+<li>14 cores, 2,3 GHz</li>
+<li>2 x 7 cores in cluster-on-die (CoD) mode enabled</li>
+<li>SMT enabled</li>
+</ul>
+<p>memory bandwidth:</p>
+<ul class="simple">
+<li>copy-19              47.3 GB/s</li>
+<li>copy-19-nt-sl        47.1 GB/s</li>
+<li>update-19            44.0 GB/s</li>
+</ul>
+<p>geometry dimensions:  500x100x100</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="19%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="4%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">kernel</th>
+<th class="head">pipe</th>
+<th class="head">blocks-2</th>
+<th class="head">blocks-4</th>
+<th class="head">blocks-6</th>
+<th class="head">blocks-8</th>
+<th class="head">blocks-10</th>
+<th class="head">blocks-15</th>
+<th class="head">blocks-16</th>
+<th class="head">blocks-20</th>
+<th class="head">blocks-25</th>
+<th class="head">blocks-32</th>
+<th class="head">RFM</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>blk-push-aos</td>
+<td>58.82</td>
+<td>49.85</td>
+<td>57.34</td>
+<td>59.90</td>
+<td>61.37</td>
+<td>62.17</td>
+<td>65.30</td>
+<td>64.00</td>
+<td>67.54</td>
+<td>64.46</td>
+<td>69.69</td>
+<td>104</td>
+</tr>
+<tr><td>blk-push-soa</td>
+<td>32.32</td>
+<td>33.46</td>
+<td>34.02</td>
+<td>34.64</td>
+<td>35.06</td>
+<td>35.04</td>
+<td>36.31</td>
+<td>35.44</td>
+<td>37.20</td>
+<td>35.14</td>
+<td>37.95</td>
+<td>104</td>
+</tr>
+<tr><td>blk-pull-aos</td>
+<td>56.97</td>
+<td>51.41</td>
+<td>56.09</td>
+<td>57.92</td>
+<td>59.98</td>
+<td>59.83</td>
+<td>63.37</td>
+<td>61.55</td>
+<td>65.50</td>
+<td>63.11</td>
+<td>67.02</td>
+<td>104</td>
+</tr>
+<tr><td>blk-pull-soa</td>
+<td>49.29</td>
+<td>46.23</td>
+<td>47.50</td>
+<td>51.97</td>
+<td>51.27</td>
+<td>49.52</td>
+<td>55.23</td>
+<td>53.13</td>
+<td>54.50</td>
+<td>49.79</td>
+<td>57.90</td>
+<td>104</td>
+</tr>
+<tr><td>aa-aos</td>
+<td>91.35</td>
+<td>66.14</td>
+<td>76.80</td>
+<td>84.76</td>
+<td>83.63</td>
+<td>91.36</td>
+<td>93.46</td>
+<td>92.62</td>
+<td>93.91</td>
+<td>92.25</td>
+<td>92.93</td>
+<td>145</td>
+</tr>
+<tr><td>aa-soa</td>
+<td>75.51</td>
+<td>65.68</td>
+<td>70.94</td>
+<td>71.36</td>
+<td>73.83</td>
+<td>75.46</td>
+<td>74.84</td>
+<td>79.48</td>
+<td>83.28</td>
+<td>77.70</td>
+<td>82.72</td>
+<td>145</td>
+</tr>
+<tr><td>aa-vec-soa</td>
+<td>93.85</td>
+<td>83.44</td>
+<td>91.58</td>
+<td>93.96</td>
+<td>94.35</td>
+<td>96.62</td>
+<td>101.76</td>
+<td>96.72</td>
+<td>106.37</td>
+<td>102.60</td>
+<td>110.28</td>
+<td>145</td>
+</tr>
+<tr><td>list-push-aos</td>
+<td>80.29</td>
+<td>80.97</td>
+<td>80.95</td>
+<td>81.10</td>
+<td>81.37</td>
+<td>82.44</td>
+<td>81.77</td>
+<td>81.49</td>
+<td>80.72</td>
+<td>81.93</td>
+<td>80.93</td>
+<td>83</td>
+</tr>
+<tr><td>list-push-soa</td>
+<td>47.52</td>
+<td>42.65</td>
+<td>45.28</td>
+<td>46.64</td>
+<td>43.46</td>
+<td>40.59</td>
+<td>44.94</td>
+<td>46.55</td>
+<td>41.53</td>
+<td>45.98</td>
+<td>44.86</td>
+<td>83</td>
+</tr>
+<tr><td>list-pull-aos</td>
+<td>85.30</td>
+<td>82.97</td>
+<td>86.43</td>
+<td>83.42</td>
+<td>86.33</td>
+<td>83.70</td>
+<td>86.43</td>
+<td>83.77</td>
+<td>83.10</td>
+<td>85.89</td>
+<td>84.44</td>
+<td>83</td>
+</tr>
+<tr><td>list-pull-soa</td>
+<td>62.12</td>
+<td>63.61</td>
+<td>63.28</td>
+<td>61.32</td>
+<td>66.72</td>
+<td>62.65</td>
+<td>64.82</td>
+<td>60.49</td>
+<td>58.01</td>
+<td>64.46</td>
+<td>62.52</td>
+<td>83</td>
+</tr>
+<tr><td>list-pull-split-nt-1s-soa</td>
+<td>121.35</td>
+<td>113.77</td>
+<td>115.29</td>
+<td>113.54</td>
+<td>117.00</td>
+<td>116.46</td>
+<td>114.78</td>
+<td>114.54</td>
+<td>110.83</td>
+<td>112.67</td>
+<td>117.85</td>
+<td>125</td>
+</tr>
+<tr><td>list-pull-split-nt-2s-soa</td>
+<td>118.09</td>
+<td>110.48</td>
+<td>112.55</td>
+<td>113.18</td>
+<td>113.44</td>
+<td>111.85</td>
+<td>109.27</td>
+<td>114.41</td>
+<td>110.28</td>
+<td>111.78</td>
+<td>113.74</td>
+<td>125</td>
+</tr>
+<tr><td>list-aa-aos</td>
+<td>121.28</td>
+<td>118.63</td>
+<td>119.00</td>
+<td>118.50</td>
+<td>121.99</td>
+<td>119.11</td>
+<td>118.83</td>
+<td>121.47</td>
+<td>121.62</td>
+<td>126.18</td>
+<td>120.12</td>
+<td>129</td>
+</tr>
+<tr><td>list-aa-soa</td>
+<td>126.34</td>
+<td>116.90</td>
+<td>129.45</td>
+<td>127.12</td>
+<td>129.41</td>
+<td>121.42</td>
+<td>126.19</td>
+<td>126.76</td>
+<td>126.70</td>
+<td>124.40</td>
+<td>125.22</td>
+<td>129</td>
+</tr>
+<tr><td>list-aa-ria-soa</td>
+<td>133.68</td>
+<td>121.82</td>
+<td>126.04</td>
+<td>128.46</td>
+<td>131.15</td>
+<td>132.25</td>
+<td>128.78</td>
+<td>133.50</td>
+<td>126.69</td>
+<td>124.40</td>
+<td>130.37</td>
+<td>145</td>
+</tr>
+<tr><td>list-aa-pv-soa</td>
+<td>146.22</td>
+<td>124.39</td>
+<td>130.73</td>
+<td>136.29</td>
+<td>137.61</td>
+<td>131.21</td>
+<td>138.65</td>
+<td>138.78</td>
+<td>127.02</td>
+<td>132.40</td>
+<td>138.37</td>
+<td>145</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="broadwell-intel-xeon-e5-2630-v4">
+<h2><a class="toc-backref" href="#id24">6.2&nbsp;&nbsp;&nbsp;Broadwell, Intel Xeon E5-2630 v4</a></h2>
+<ul class="simple">
+<li>Broadwell architecture, AVX2, FMA</li>
+<li>10 cores, 2.2 GHz</li>
+<li>SMT disabled</li>
+</ul>
+<p>memory bandwidth:</p>
+<ul class="simple">
+<li>copy-19              48.0 GB/s</li>
+<li>copy-nt-sl-19        48.2 GB/s</li>
+<li>update-19            51.1 GB/s</li>
+</ul>
+<p>geometry dimensions:  500x100x100</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="19%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="5%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">kernel</th>
+<th class="head">pipe</th>
+<th class="head">blocks-2</th>
+<th class="head">blocks-4</th>
+<th class="head">blocks-6</th>
+<th class="head">blocks-8</th>
+<th class="head">blocks-10</th>
+<th class="head">blocks-15</th>
+<th class="head">blocks-16</th>
+<th class="head">blocks-20</th>
+<th class="head">blocks-25</th>
+<th class="head">blocks-32</th>
+<th class="head">RFM</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>blk-push-aos</td>
+<td>55.75</td>
+<td>47.62</td>
+<td>54.57</td>
+<td>57.10</td>
+<td>58.49</td>
+<td>59.00</td>
+<td>61.72</td>
+<td>60.56</td>
+<td>64.05</td>
+<td>61.10</td>
+<td>66.03</td>
+<td>105</td>
+</tr>
+<tr><td>blk-push-soa</td>
+<td>30.06</td>
+<td>31.09</td>
+<td>32.13</td>
+<td>32.54</td>
+<td>32.74</td>
+<td>32.72</td>
+<td>33.81</td>
+<td>33.19</td>
+<td>34.90</td>
+<td>33.21</td>
+<td>35.75</td>
+<td>105</td>
+</tr>
+<tr><td>blk-pull-aos</td>
+<td>53.80</td>
+<td>48.61</td>
+<td>53.08</td>
+<td>54.99</td>
+<td>56.08</td>
+<td>56.68</td>
+<td>59.20</td>
+<td>58.12</td>
+<td>61.49</td>
+<td>58.71</td>
+<td>63.45</td>
+<td>105</td>
+</tr>
+<tr><td>blk-pull-soa</td>
+<td>46.96</td>
+<td>46.61</td>
+<td>48.84</td>
+<td>49.70</td>
+<td>50.33</td>
+<td>50.46</td>
+<td>52.36</td>
+<td>51.39</td>
+<td>54.20</td>
+<td>51.61</td>
+<td>55.71</td>
+<td>105</td>
+</tr>
+<tr><td>aa-aos</td>
+<td>91.40</td>
+<td>66.99</td>
+<td>78.47</td>
+<td>83.38</td>
+<td>86.62</td>
+<td>88.62</td>
+<td>92.98</td>
+<td>91.54</td>
+<td>97.08</td>
+<td>94.93</td>
+<td>98.90</td>
+<td>168</td>
+</tr>
+<tr><td>aa-soa</td>
+<td>83.01</td>
+<td>69.96</td>
+<td>75.85</td>
+<td>77.72</td>
+<td>79.01</td>
+<td>79.29</td>
+<td>82.38</td>
+<td>80.11</td>
+<td>85.70</td>
+<td>83.91</td>
+<td>87.69</td>
+<td>168</td>
+</tr>
+<tr><td>aa-vec-soa</td>
+<td>112.03</td>
+<td>96.52</td>
+<td>105.32</td>
+<td>109.76</td>
+<td>112.55</td>
+<td>113.82</td>
+<td>120.55</td>
+<td>118.37</td>
+<td>126.30</td>
+<td>121.37</td>
+<td>131.94</td>
+<td>168</td>
+</tr>
+<tr><td>list-push-aos</td>
+<td>75.13</td>
+<td>74.18</td>
+<td>75.20</td>
+<td>75.42</td>
+<td>75.24</td>
+<td>75.99</td>
+<td>75.80</td>
+<td>75.80</td>
+<td>75.54</td>
+<td>76.22</td>
+<td>76.21</td>
+<td>97</td>
+</tr>
+<tr><td>list-push-soa</td>
+<td>40.99</td>
+<td>38.14</td>
+<td>39.00</td>
+<td>38.89</td>
+<td>38.89</td>
+<td>39.67</td>
+<td>39.87</td>
+<td>39.28</td>
+<td>39.35</td>
+<td>40.08</td>
+<td>40.13</td>
+<td>97</td>
+</tr>
+<tr><td>list-pull-aos</td>
+<td>82.07</td>
+<td>82.88</td>
+<td>83.29</td>
+<td>83.09</td>
+<td>83.32</td>
+<td>83.49</td>
+<td>82.82</td>
+<td>82.88</td>
+<td>83.32</td>
+<td>82.60</td>
+<td>82.93</td>
+<td>97</td>
+</tr>
+<tr><td>list-pull-soa</td>
+<td>62.07</td>
+<td>60.40</td>
+<td>61.89</td>
+<td>61.39</td>
+<td>62.43</td>
+<td>60.90</td>
+<td>60.48</td>
+<td>62.80</td>
+<td>62.50</td>
+<td>61.10</td>
+<td>60.38</td>
+<td>97</td>
+</tr>
+<tr><td>list-pull-split-nt-1s-soa</td>
+<td>125.81</td>
+<td>120.60</td>
+<td>121.96</td>
+<td>122.34</td>
+<td>122.86</td>
+<td>123.53</td>
+<td>123.64</td>
+<td>123.67</td>
+<td>125.94</td>
+<td>124.09</td>
+<td>123.69</td>
+<td>128</td>
+</tr>
+<tr><td>list-pull-split-nt-2s-soa</td>
+<td>122.79</td>
+<td>117.16</td>
+<td>118.86</td>
+<td>119.16</td>
+<td>119.56</td>
+<td>119.99</td>
+<td>120.01</td>
+<td>120.03</td>
+<td>122.64</td>
+<td>120.57</td>
+<td>120.39</td>
+<td>128</td>
+</tr>
+<tr><td>list-aa-aos</td>
+<td>128.13</td>
+<td>127.41</td>
+<td>129.31</td>
+<td>129.07</td>
+<td>129.79</td>
+<td>129.63</td>
+<td>129.67</td>
+<td>129.94</td>
+<td>129.12</td>
+<td>128.41</td>
+<td>129.72</td>
+<td>150</td>
+</tr>
+<tr><td>list-aa-soa</td>
+<td>141.60</td>
+<td>139.78</td>
+<td>141.58</td>
+<td>142.16</td>
+<td>141.94</td>
+<td>141.31</td>
+<td>142.37</td>
+<td>142.25</td>
+<td>142.43</td>
+<td>141.40</td>
+<td>142.26</td>
+<td>150</td>
+</tr>
+<tr><td>list-aa-ria-soa</td>
+<td>141.82</td>
+<td>134.88</td>
+<td>140.15</td>
+<td>140.72</td>
+<td>141.67</td>
+<td>140.51</td>
+<td>141.18</td>
+<td>141.29</td>
+<td>142.97</td>
+<td>141.94</td>
+<td>143.25</td>
+<td>168</td>
+</tr>
+<tr><td>list-aa-pv-soa</td>
+<td>164.79</td>
+<td>140.95</td>
+<td>159.24</td>
+<td>161.78</td>
+<td>162.40</td>
+<td>163.04</td>
+<td>164.69</td>
+<td>164.38</td>
+<td>165.11</td>
+<td>165.75</td>
+<td>166.09</td>
+<td>168</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="skylake-intel-xeon-gold-6148">
+<h2><a class="toc-backref" href="#id25">6.3&nbsp;&nbsp;&nbsp;Skylake, Intel Xeon Gold 6148</a></h2>
+<ul class="simple">
+<li>Skylake architecture, AVX2, FMA, AVX512</li>
+<li>20 cores, 2.4 GHz</li>
+<li>SMT enabled</li>
+</ul>
+<p>memory bandwidth:</p>
+<ul class="simple">
+<li>copy-19                  89.7 GB/s</li>
+<li>copy-19-nt-sl            92.4 GB/s</li>
+<li>update-19                93.6 GB/s</li>
+</ul>
+<p>geometry dimensions:  500x100x100</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="2%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">kernel</th>
+<th class="head">pipe</th>
+<th class="head">blocks-2</th>
+<th class="head">blocks-4</th>
+<th class="head">blocks-6</th>
+<th class="head">blocks-8</th>
+<th class="head">blocks-10</th>
+<th class="head">blocks-15</th>
+<th class="head">blocks-16</th>
+<th class="head">blocks-20</th>
+<th class="head">blocks-25</th>
+<th class="head">blocks-32</th>
+<th class="head">RFM</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>blk-push-aos</td>
+<td>113.01</td>
+<td>93.99</td>
+<td>108.98</td>
+<td>114.65</td>
+<td>117.87</td>
+<td>119.47</td>
+<td>124.95</td>
+<td>122.46</td>
+<td>129.29</td>
+<td>123.87</td>
+<td>133.01</td>
+<td>197</td>
+</tr>
+<tr><td>blk-push-soa</td>
+<td>100.21</td>
+<td>98.87</td>
+<td>103.63</td>
+<td>105.56</td>
+<td>107.02</td>
+<td>107.27</td>
+<td>111.61</td>
+<td>109.83</td>
+<td>116.16</td>
+<td>110.51</td>
+<td>110.29</td>
+<td>197</td>
+</tr>
+<tr><td>blk-pull-aos</td>
+<td>118.45</td>
+<td>102.54</td>
+<td>114.12</td>
+<td>117.82</td>
+<td>122.69</td>
+<td>124.31</td>
+<td>130.58</td>
+<td>127.85</td>
+<td>135.72</td>
+<td>129.65</td>
+<td>139.94</td>
+<td>197</td>
+</tr>
+<tr><td>blk-pull-soa</td>
+<td>82.60</td>
+<td>83.36</td>
+<td>87.13</td>
+<td>88.39</td>
+<td>88.84</td>
+<td>88.96</td>
+<td>92.48</td>
+<td>90.93</td>
+<td>95.79</td>
+<td>91.92</td>
+<td>98.64</td>
+<td>197</td>
+</tr>
+<tr><td>aa-aos</td>
+<td>171.32</td>
+<td>125.43</td>
+<td>147.73</td>
+<td>157.70</td>
+<td>163.35</td>
+<td>167.25</td>
+<td>175.39</td>
+<td>174.20</td>
+<td>182.54</td>
+<td>173.67</td>
+<td>187.76</td>
+<td>308</td>
+</tr>
+<tr><td>aa-soa</td>
+<td>180.85</td>
+<td>152.39</td>
+<td>165.84</td>
+<td>152.59</td>
+<td>171.90</td>
+<td>175.76</td>
+<td>184.94</td>
+<td>182.34</td>
+<td>189.43</td>
+<td>180.30</td>
+<td>193.54</td>
+<td>308</td>
+</tr>
+<tr><td>aa-vec-soa</td>
+<td>208.03</td>
+<td>181.51</td>
+<td>195.86</td>
+<td>203.41</td>
+<td>209.08</td>
+<td>212.34</td>
+<td>224.05</td>
+<td>219.49</td>
+<td>234.31</td>
+<td>225.92</td>
+<td>245.22</td>
+<td>308</td>
+</tr>
+<tr><td>list-push-aos</td>
+<td>158.81</td>
+<td>164.67</td>
+<td>162.93</td>
+<td>163.05</td>
+<td>165.22</td>
+<td>164.31</td>
+<td>164.66</td>
+<td>160.78</td>
+<td>164.07</td>
+<td>165.19</td>
+<td>164.06</td>
+<td>177</td>
+</tr>
+<tr><td>list-push-soa</td>
+<td>134.60</td>
+<td>110.44</td>
+<td>110.17</td>
+<td>132.01</td>
+<td>132.95</td>
+<td>133.46</td>
+<td>134.37</td>
+<td>134.33</td>
+<td>135.12</td>
+<td>134.91</td>
+<td>137.87</td>
+<td>177</td>
+</tr>
+<tr><td>list-pull-aos</td>
+<td>169.61</td>
+<td>170.03</td>
+<td>170.89</td>
+<td>170.90</td>
+<td>171.20</td>
+<td>171.60</td>
+<td>172.09</td>
+<td>171.95</td>
+<td>169.48</td>
+<td>172.08</td>
+<td>171.02</td>
+<td>177</td>
+</tr>
+<tr><td>list-pull-soa</td>
+<td>120.50</td>
+<td>116.73</td>
+<td>118.62</td>
+<td>118.00</td>
+<td>120.99</td>
+<td>118.15</td>
+<td>117.17</td>
+<td>121.41</td>
+<td>120.83</td>
+<td>120.00</td>
+<td>118.74</td>
+<td>177</td>
+</tr>
+<tr><td>list-pull-split-nt-1s-soa</td>
+<td>225.59</td>
+<td>224.18</td>
+<td>225.10</td>
+<td>226.34</td>
+<td>226.01</td>
+<td>230.37</td>
+<td>227.50</td>
+<td>228.42</td>
+<td>227.39</td>
+<td>231.65</td>
+<td>227.35</td>
+<td>246</td>
+</tr>
+<tr><td>list-pull-split-nt-2s-soa</td>
+<td>219.20</td>
+<td>214.63</td>
+<td>217.61</td>
+<td>218.13</td>
+<td>219.07</td>
+<td>221.01</td>
+<td>219.88</td>
+<td>220.09</td>
+<td>220.62</td>
+<td>221.68</td>
+<td>220.58</td>
+<td>246</td>
+</tr>
+<tr><td>list-aa-aos</td>
+<td>241.39</td>
+<td>239.27</td>
+<td>239.53</td>
+<td>242.56</td>
+<td>242.46</td>
+<td>243.00</td>
+<td>242.91</td>
+<td>242.46</td>
+<td>241.24</td>
+<td>242.96</td>
+<td>241.52</td>
+<td>275</td>
+</tr>
+<tr><td>list-aa-soa</td>
+<td>273.73</td>
+<td>268.49</td>
+<td>268.48</td>
+<td>271.79</td>
+<td>275.29</td>
+<td>274.56</td>
+<td>277.18</td>
+<td>272.67</td>
+<td>274.21</td>
+<td>275.24</td>
+<td>278.21</td>
+<td>275</td>
+</tr>
+<tr><td>list-aa-ria-soa</td>
+<td>288.42</td>
+<td>261.89</td>
+<td>273.26</td>
+<td>284.84</td>
+<td>283.88</td>
+<td>288.29</td>
+<td>290.72</td>
+<td>289.81</td>
+<td>293.36</td>
+<td>290.75</td>
+<td>292.93</td>
+<td>308</td>
+</tr>
+<tr><td>list-aa-pv-soa</td>
+<td>303.35</td>
+<td>267.21</td>
+<td>289.18</td>
+<td>294.96</td>
+<td>294.36</td>
+<td>298.16</td>
+<td>300.45</td>
+<td>301.71</td>
+<td>302.37</td>
+<td>302.88</td>
+<td>304.46</td>
+<td>308</td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 <div class="section" id="licence">
-<h1><a class="toc-backref" href="#id16">6&nbsp;&nbsp;&nbsp;Licence</a></h1>
+<h1><a class="toc-backref" href="#id26">7&nbsp;&nbsp;&nbsp;Licence</a></h1>
 <p>The Lattice Boltzmann Benchmark Kernels are licensed under GPLv3.</p>
 </div>
 <div class="section" id="acknowledgements">
-<h1><a class="toc-backref" href="#id17">7&nbsp;&nbsp;&nbsp;Acknowledgements</a></h1>
+<h1><a class="toc-backref" href="#id27">8&nbsp;&nbsp;&nbsp;Acknowledgements</a></h1>
 <p>This work was funded by BMBF, grant no. 01IH15003A (project SKAMPY).</p>
 <p>This work was funded by KONWHIR project OMI4PAPS.</p>
-<p>Document was generated at 2017-11-02 15:33.</p>
+</div>
+<div class="section" id="bibliography">
+<h1><a class="toc-backref" href="#id28">9&nbsp;&nbsp;&nbsp;Bibliography</a></h1>
+<table class="docutils citation" frame="void" id="ginzburg-2008" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[ginzburg-2008]</a></td><td>I. Ginzburg, F. Verhaeghe, and D. d'Humières.
+Two-relaxation-time lattice Boltzmann scheme: About parametrization, velocity, pressure and mixed boundary conditions.
+Commun. Comput. Phys., 3(2):427-478, 2008.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="williams-2008" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[williams-2008]</a></td><td>S. Williams, A. Waterman, and D. Patterson.
+Roofline: an insightful visual performance model for multicore architectures.
+Commun. ACM, 52(4):65-76, Apr 2009. doi:10.1145/1498765.1498785</td></tr>
+</tbody>
+</table>
+<p>Document was generated at 2017-11-21 15:43.</p>
 </div>
 </div>
 </body>
