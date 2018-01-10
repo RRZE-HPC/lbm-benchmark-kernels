@@ -32,6 +32,8 @@
 
 #include <errno.h>
 
+static const char * g_geoTypeStr[] = { "box", "channel", "pipe", "blocks", "fluid" };
+
 void GeoCreateByStr(const char * geometryType, int dims[3], int periodic[3], LatticeDesc * ld)
 {
 	int type = -1;
@@ -102,9 +104,9 @@ void GeoCreateByType(GEO_TYPES type, void * typeDetails, int dims[3], int period
 	Assert(type >= GEO_TYPE_MIN);
 	Assert(type <= GEO_TYPE_MAX);
 
-	const char * geoTypeStr[] = { "box", "channel", "pipe", "blocks", "fluid" };
+	// const char * geoTypeStr[] = { "box", "channel", "pipe", "blocks", "fluid" };
 
-	printf("# geometry: %d x %d x %d nodes, type %d %s\n", dims[0], dims[1], dims[2], type, geoTypeStr[type]);
+	// printf("# geometry: %d x %d x %d nodes, type %d %s\n", dims[0], dims[1], dims[2], type, geoTypeStr[type]);
 
 	ld->Dims[0] = dims[0];
 	ld->Dims[1] = dims[1];
@@ -113,6 +115,7 @@ void GeoCreateByType(GEO_TYPES type, void * typeDetails, int dims[3], int period
 	ld->PeriodicX = periodic[0];
 	ld->PeriodicY = periodic[1];
 	ld->PeriodicZ = periodic[2];
+	ld->Name = g_geoTypeStr[type];
 
 	LatticeT * lattice;
 	MemAlloc((void **)&lattice, sizeof(LatticeT) * dims[0] * dims[1] * dims[2]);

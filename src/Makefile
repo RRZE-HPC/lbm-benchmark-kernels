@@ -58,6 +58,9 @@ ISA ?= avx
 
 LIKWID ?= off
 
+# Which floating point precision to use: dp (double precision) or sp (single preicision)
+PRECISION ?= dp
+
 # Global settings for the Makefile
 SHELL      = sh
 
@@ -91,8 +94,8 @@ SED        = sed
 
 
 # Where to store objects and dependency files.
-OBJECT_DIR      = obj/$(CONFIG)-$(BUILD)$(TAG)
-DEP_DIR         = obj/$(CONFIG)-$(BUILD)$(TAG)-dep
+OBJECT_DIR      = obj/$(CONFIG)-$(BUILD)$(PREC)$(TAG)
+DEP_DIR         = obj/$(CONFIG)-$(BUILD)$(PREC)$(TAG)-dep
 
 # Sources to consider.
 SOURCES_C = Main.c Memory.c Geometry.c Kernel.c \
@@ -134,7 +137,9 @@ OBJ_C = $(foreach SOURCE,$(SOURCES_C),$(OBJECT_DIR)/$(SOURCE:%.c=%.o)) \
 		$(OBJECT_DIR)/BenchKernelD3Q19Aa_AaSoA.o \
 		$(OBJECT_DIR)/BenchKernelD3Q19AaCommon_AaSoA.o \
 		$(OBJECT_DIR)/BenchKernelD3Q19AaVec_AaSoA.o \
-		$(OBJECT_DIR)/BenchKernelD3Q19AaVecCommon_AaSoA.o
+		$(OBJECT_DIR)/BenchKernelD3Q19AaVecCommon_AaSoA.o \
+		$(OBJECT_DIR)/BenchKernelD3Q19AaVecSl_AaSoA.o \
+		$(OBJECT_DIR)/BenchKernelD3Q19AaVecSlCommon_AaSoA.o
 
 OBJ = $(OBJ_C)
 
@@ -210,6 +215,19 @@ ifeq (on,$(LIKWID))
   LD_LIBS  += $(LIKWID_LIB) -llikwid
 endif
 
+
+ifeq (dp,$(PRECISION))
+  PP_FLAGS += $(D)PRECISION_DP
+  PREC=-dp
+else
+ifeq (sp,$(PRECISION))
+  PP_FLAGS += $(D)PRECISION_SP
+  PREC=-sp
+else
+  $(error PRECISION is only be allowed to be sp (single precision) or dp (doble precision))
+endif
+endif
+
 # ARCH can only be assigned a string without a space. The space is escaped as
 # a comma which we have to replace here.
 
@@ -225,8 +243,12 @@ endif
 
 .phony: all clean clean-all
 
-$(info $(shell $(ECHO_E) "# Configuration:   CONFIG=$(COLOR_CYAN)$(CONFIG)$(COLOR_NO)   BUILD=$(COLOR_CYAN)$(BUILD)$(COLOR_NO)   VERIFICATION=$(COLOR_CYAN)$(VERIFICATION)$(COLOR_NO)   STATISTICS=$(COLOR_CYAN)$(STATISTICS)$(COLOR_NO)   VTK_OUTPUT=$(COLOR_CYAN)$(VTK_OUTPUT)$(COLOR_NO)  OPENMP=$(COLOR_CYAN)$(OPENMP)$(COLOR_NO)   ISA=$(COLOR_CYAN)$(ISA)$(COLOR_NO)   LIKWID=$(COLOR_CYAN)$(LIKWID)$(COLOR_NO)   TARCH=$(COLOR_CYAN)$(TARCH)$(COLOR_NO)   building $(.DEFAULT_GOAL)..."))
+#$(info $(shell $(ECHO_E) "# Configuration:   CONFIG=$(COLOR_CYAN)$(CONFIG)$(COLOR_NO)   BUILD=$(COLOR_CYAN)$(BUILD)$(COLOR_NO)   VERIFICATION=$(COLOR_CYAN)$(VERIFICATION)$(COLOR_NO)   STATISTICS=$(COLOR_CYAN)$(STATISTICS)$(COLOR_NO)   VTK_OUTPUT=$(COLOR_CYAN)$(VTK_OUTPUT)$(COLOR_NO)  OPENMP=$(COLOR_CYAN)$(OPENMP)$(COLOR_NO)   ISA=$(COLOR_CYAN)$(ISA)$(COLOR_NO)   LIKWID=$(COLOR_CYAN)$(LIKWID)$(COLOR_NO)   TARCH=$(COLOR_CYAN)$(TARCH)$(COLOR_NO)   building $(.DEFAULT_GOAL)..."))
 
+$(info $(shell $(ECHO_E) "# Configuration: CONFIG=$(COLOR_CYAN)$(CONFIG)$(COLOR_NO)   BUILD=$(COLOR_CYAN)$(BUILD)$(COLOR_NO)  PRECISION=$(COLOR_CYAN)$(PRECISION)$(COLOR_NO)"))
+$(info $(shell $(ECHO_E) "#                OPENMP=$(COLOR_CYAN)$(OPENMP)$(COLOR_NO)   ISA=$(COLOR_CYAN)$(ISA)$(COLOR_NO)   LIKWID=$(COLOR_CYAN)$(LIKWID)$(COLOR_NO)"))
+$(info $(shell $(ECHO_E) "#                VERIFICATION=$(COLOR_CYAN)$(VERIFICATION)$(COLOR_NO)   STATISTICS=$(COLOR_CYAN)$(STATISTICS)$(COLOR_NO)   VTK_OUTPUT=$(COLOR_CYAN)$(VTK_OUTPUT)$(COLOR_NO)"))
+$(info $(shell $(ECHO_E) "#                      target=$(.DEFAULT_GOAL)"))
 
 $(info # Object dir:      $(OBJECT_DIR))
 $(info # Dependency dir:  $(DEP_DIR))
@@ -234,7 +256,7 @@ $(info # Dependency dir:  $(DEP_DIR))
 
 BIN_DIR=../bin
 
-all: $(BIN_DIR)/lbmbenchk-$(CONFIG)-$(BUILD)$(BUILD_CONFIG)$(TAG)
+all: $(BIN_DIR)/lbmbenchk-$(CONFIG)-$(BUILD)$(BUILD_CONFIG)$(PREC)$(TAG)
 
 
 # ------------------------------------------------------------------------
@@ -255,11 +277,14 @@ all: $(BIN_DIR)/lbmbenchk-$(CONFIG)-$(BUILD)$(BUILD_CONFIG)$(TAG)
 $(BIN_DIR):
 	[ -d "$@" ] || mkdir -p "$@"
 
-$(BIN_DIR)/lbmbenchk-$(CONFIG)-$(BUILD)$(BUILD_CONFIG)$(TAG): $(OBJ) $(REBUILD_DEPS) $(DEP_DIR)/.target | $(BIN_DIR)
+$(BIN_DIR)/lbmbenchk-$(CONFIG)-$(BUILD)$(BUILD_CONFIG)$(PREC)$(TAG): $(OBJ) $(REBUILD_DEPS) $(DEP_DIR)/.target | $(BIN_DIR)
 	@$(ECHO_E) "linking: $(COLOR_CYAN)$@$(COLOR_NO)"
 	$(LD) $(LD_FLAGS) -o $@ $(filter-out $(REBUILD_DEPS),$^) $(LD_LIBS)
 	@$(ECHO_E) "# Builded binary:      $(COLOR_CYAN)$@$(COLOR_NO)"
-	@$(ECHO_E) "# Configuration was:   CONFIG=$(COLOR_CYAN)$(CONFIG)$(COLOR_NO)   BUILD=$(COLOR_CYAN)$(BUILD)$(COLOR_NO)   VERIFICATION=$(COLOR_CYAN)$(VERIFICATION)$(COLOR_NO)   STATISTICS=$(COLOR_CYAN)$(STATISTICS)$(COLOR_NO)   VTK_OUTPUT=$(COLOR_CYAN)$(VTK_OUTPUT)$(COLOR_NO)  OPENMP=$(COLOR_CYAN)$(OPENMP)$(COLOR_NO)   ISA=$(COLOR_CYAN)$(ISA)$(COLOR_NO)   LIKWID=$(COLOR_CYAN)$(LIKWID)$(COLOR_NO)   target=$(.DEFAULT_GOAL)"
+	@$(ECHO_E) "# Configuration was:   CONFIG=$(COLOR_CYAN)$(CONFIG)$(COLOR_NO)   BUILD=$(COLOR_CYAN)$(BUILD)$(COLOR_NO)  PRECISION=$(COLOR_CYAN)$(PRECISION)$(COLOR_NO)"
+	@$(ECHO_E) "#                      OPENMP=$(COLOR_CYAN)$(OPENMP)$(COLOR_NO)   ISA=$(COLOR_CYAN)$(ISA)$(COLOR_NO)   LIKWID=$(COLOR_CYAN)$(LIKWID)$(COLOR_NO)"
+	@$(ECHO_E) "#                      VERIFICATION=$(COLOR_CYAN)$(VERIFICATION)$(COLOR_NO)   STATISTICS=$(COLOR_CYAN)$(STATISTICS)$(COLOR_NO)   VTK_OUTPUT=$(COLOR_CYAN)$(VTK_OUTPUT)$(COLOR_NO)"
+	@$(ECHO_E) "#                      target=$(.DEFAULT_GOAL)"
 
 $(OBJECT_DIR)/%_SoA.o: %.c $(REBUILD_DEPS)
 	@$(ECHO_E) "compiling: $(COLOR_CYAN)$@$(COLOR_NO)    $(COLOR_MAGENTA)DATA_LAYOUT_SOA$(COLOR_NO)"
@@ -308,7 +333,7 @@ $(DEP_DIR)/.target:
 
 # ------------------------------------------------------------------------
 # Current configuration.
-MAKE_CFG = SYSTEM=$(SYSTEM) // BUILD=$(BUILD) // MAKEOVERRIDES=\"$(strip $(MAKEOVERRIDES))\" // VERIFICATION=$(VERIFICATION) // STATISTICS=$(STATISTICS) // VTK_OUTPUT=$(VTK_OUTPUT) // VTK_OUTPUT_ASCII=$(VTK_OUTPUT_ASCII) // LID_DRIVEN_CAVITY=$(LID_DRIVEN_CAVITY) // ISA=$(ISA) // LIKWID=$(LIKWID)
+MAKE_CFG = SYSTEM=$(SYSTEM) // BUILD=$(BUILD) // MAKEOVERRIDES=\"$(strip $(MAKEOVERRIDES))\" // VERIFICATION=$(VERIFICATION) // STATISTICS=$(STATISTICS) // VTK_OUTPUT=$(VTK_OUTPUT) // VTK_OUTPUT_ASCII=$(VTK_OUTPUT_ASCII) // LID_DRIVEN_CAVITY=$(LID_DRIVEN_CAVITY) // ISA=$(ISA) // LIKWID=$(LIKWID) // PRECISION=$(PRECISION)
 
 # Compare current configuration to the last one so we know when to
 # rebuild this system/target despite when sources have not changed.

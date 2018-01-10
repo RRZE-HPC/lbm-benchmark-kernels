@@ -41,6 +41,9 @@
 #ifdef DEBUG
 		memset(tmpArray, -1, sizeof(PdfT) * nTmpArray * N_TMP);
 #endif
+		#ifdef INTEL_OPT_DIRECTIVES
+			#pragma ivdep
+		#endif
 		for (int index = 0; index < indexMax; ++index) {
 
 
@@ -69,7 +72,7 @@
 				   pdf_T  + pdf_TN + pdf_TE + pdf_TS + pdf_TW +
 				   pdf_B  + pdf_BN + pdf_BE + pdf_BS + pdf_BW;
 
-			dir_indep_trm = dens - (ux * ux + uy * uy + uz * uz) * 3.0 / 2.0;
+			dir_indep_trm = dens - (ux * ux + uy * uy + uz * uz) * F(3.0) / F(2.0);
 
 			w_1_indep = w_1 * dir_indep_trm;
 			w_2_indep = w_2 * dir_indep_trm;

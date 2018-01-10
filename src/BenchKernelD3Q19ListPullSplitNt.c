@@ -55,8 +55,8 @@ void FNAME(KernelPullSplitNt1S)(LatticeDesc * ld, KernelData * kernelData, CaseD
 	Assert(kernelData != NULL);
 	Assert(cd != NULL);
 
-	Assert(cd->Omega > 0.0);
-	Assert(cd->Omega < 2.0);
+	Assert(cd->Omega > F(0.0));
+	Assert(cd->Omega < F(2.0));
 
 	KernelData        * kd   = (KernelData *)kernelData;
 	KernelDataList    * kdl  = KDL(kernelData);
@@ -65,16 +65,16 @@ void FNAME(KernelPullSplitNt1S)(LatticeDesc * ld, KernelData * kernelData, CaseD
 	PdfT omega = cd->Omega;
 	const PdfT omegaEven = omega;
 
-	PdfT magicParam = 1.0 / 12.0;
-	const PdfT omegaOdd = 1.0 / (0.5 + magicParam / (1.0 / omega - 0.5));
+	PdfT magicParam = F(1.0) / F(12.0);
+	const PdfT omegaOdd = F(1.0) / (F(0.5) + magicParam / (F(1.0) / omega - F(0.5)));
 
 
-	const PdfT w_0 = 1.0 /  3.0;
-	const PdfT w_1 = 1.0 / 18.0;
-	const PdfT w_2 = 1.0 / 36.0;
+	const PdfT w_0 = F(1.0) / F( 3.0);
+	const PdfT w_1 = F(1.0) / F(18.0);
+	const PdfT w_2 = F(1.0) / F(36.0);
 
-	const PdfT w_1_x3 = w_1 * 3.0;	const PdfT w_1_nine_half = w_1 * 9.0 / 2.0;
-	const PdfT w_2_x3 = w_2 * 3.0;	const PdfT w_2_nine_half = w_2 * 9.0 / 2.0;
+	const PdfT w_1_x3 = w_1 * F(3.0);	const PdfT w_1_nine_half = w_1 * F(9.0) / F(2.0);
+	const PdfT w_2_x3 = w_2 * F(3.0);	const PdfT w_2_nine_half = w_2 * F(9.0) / F(2.0);
 
 	const VPDFT vw_1_x3 = VSET(w_1_x3);
 	const VPDFT vw_2_x3 = VSET(w_2_x3);
@@ -85,7 +85,7 @@ void FNAME(KernelPullSplitNt1S)(LatticeDesc * ld, KernelData * kernelData, CaseD
 	const VPDFT vomegaEven = VSET(omegaEven);
 	const VPDFT vomegaOdd  = VSET(omegaOdd);
 
-	const VPDFT voneHalf = VSET(0.5);
+	const VPDFT voneHalf = VSET(F(0.5));
 
 	// uint32_t nConsecNodes = kdlr->nConsecNodes;
 	// uint32_t * consecNodes = kdlr->ConsecNodes;
@@ -266,8 +266,8 @@ void FNAME(KernelPullSplitNt2S)(LatticeDesc * ld, KernelData * kernelData, CaseD
 	Assert(kernelData != NULL);
 	Assert(cd != NULL);
 
-	Assert(cd->Omega > 0.0);
-	Assert(cd->Omega < 2.0);
+	Assert(cd->Omega > F(0.0));
+	Assert(cd->Omega < F(2.0));
 
 	KernelData        * kd   = (KernelData *)kernelData;
 	KernelDataList    * kdl  = KDL(kernelData);
@@ -276,16 +276,15 @@ void FNAME(KernelPullSplitNt2S)(LatticeDesc * ld, KernelData * kernelData, CaseD
 	PdfT omega = cd->Omega;
 	const PdfT omegaEven = omega;
 
-	PdfT magicParam = 1.0 / 12.0;
-	const PdfT omegaOdd = 1.0 / (0.5 + magicParam / (1.0 / omega - 0.5));
+	PdfT magicParam = F(1.0) / F(12.0);
+	const PdfT omegaOdd = F(1.0) / (F(0.5) + magicParam / (F(1.0) / omega - F(0.5)));
 
+	const PdfT w_0 = F(1.0) / F( 3.0);
+	const PdfT w_1 = F(1.0) / F(18.0);
+	const PdfT w_2 = F(1.0) / F(36.0);
 
-	const PdfT w_0 = 1.0 /  3.0;
-	const PdfT w_1 = 1.0 / 18.0;
-	const PdfT w_2 = 1.0 / 36.0;
-
-	const PdfT w_1_x3 = w_1 * 3.0;	const PdfT w_1_nine_half = w_1 * 9.0 / 2.0;
-	const PdfT w_2_x3 = w_2 * 3.0;	const PdfT w_2_nine_half = w_2 * 9.0 / 2.0;
+	const PdfT w_1_x3 = w_1 * F(3.0);	const PdfT w_1_nine_half = w_1 * F(9.0) / F(2.0);
+	const PdfT w_2_x3 = w_2 * F(3.0);	const PdfT w_2_nine_half = w_2 * F(9.0) / F(2.0);
 
 	const VPDFT vw_1_x3 = VSET(w_1_x3);
 	const VPDFT vw_2_x3 = VSET(w_2_x3);
@@ -296,7 +295,7 @@ void FNAME(KernelPullSplitNt2S)(LatticeDesc * ld, KernelData * kernelData, CaseD
 	const VPDFT vomegaEven = VSET(omegaEven);
 	const VPDFT vomegaOdd  = VSET(omegaOdd);
 
-	const VPDFT voneHalf = VSET(0.5);
+	const VPDFT voneHalf = VSET(F(0.5));
 
 	// uint32_t nConsecNodes = kdlr->nConsecNodes;
 	// uint32_t * consecNodes = kdlr->ConsecNodes;

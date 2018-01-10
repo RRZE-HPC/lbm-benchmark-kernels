@@ -332,7 +332,7 @@ void FNAME(D3Q19AaVecInit)(LatticeDesc * ld, KernelData ** kernelData, Parameter
 	gDims[0] = lDims[0] + 2;
 	gDims[1] = lDims[1] + 2;
 	// TODO: fix this for aa-vec2-soa
-	gDims[2] = lDims[2] + 4; // one ghost cell in front, one in the back, plus at most two at the back for VSIZE = 4
+	gDims[2] = lDims[2] + 2 + VSIZE - 2; // one ghost cell in front, one in the back, plus at most two at the back for VSIZE = 4
 
 	kd->Offsets[0] = 1;
 	kd->Offsets[1] = 1;

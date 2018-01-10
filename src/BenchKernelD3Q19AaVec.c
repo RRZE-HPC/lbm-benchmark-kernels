@@ -81,7 +81,7 @@ void DumpPdfs(LatticeDesc * ld, KernelData * kd, int zStart, int zStop, int iter
 //						kd->GetNode(kd, x, y, z, pdfs);
 					}
 					else {
-						pdfs[dir] = -1.0;
+						pdfs[dir] = -F(1.0);
 					}
 
 					printf("%.16e ", pdfs[dir]);
@@ -100,8 +100,8 @@ void FNAME(D3Q19AaVecKernel)(LatticeDesc * ld, KernelData * kd, CaseData * cd)
 	Assert(kd != NULL);
 	Assert(cd != NULL);
 
-	Assert(cd->Omega > 0.0);
-	Assert(cd->Omega < 2.0);
+	Assert(cd->Omega > F(0.0));
+	Assert(cd->Omega < F(2.0));
 
 	KernelDataAa * kda = KDA(kd);
 
@@ -233,8 +233,8 @@ static void KernelEven(LatticeDesc * ld, KernelData * kd, CaseData * cd) // {{{
 	Assert(kd != NULL);
 	Assert(cd != NULL);
 
-	Assert(cd->Omega > 0.0);
-	Assert(cd->Omega < 2.0);
+	Assert(cd->Omega > F(0.0));
+	Assert(cd->Omega < F(2.0));
 
 	KernelDataAa * kda  = KDA(kd);
 
@@ -256,19 +256,19 @@ static void KernelEven(LatticeDesc * ld, KernelData * kd, CaseData * cd) // {{{
 	PdfT omega = cd->Omega;
 	PdfT omegaEven = omega;
 
-	PdfT magicParam = 1.0 / 12.0;
-	PdfT omegaOdd = 1.0 / (0.5 + magicParam / (1.0 / omega - 0.5));
+	PdfT magicParam = F(1.0) / F(12.0);
+	PdfT omegaOdd = F(1.0) / (F(0.5) + magicParam / (F(1.0) / omega - F(0.5)));
 
-	const PdfT w_0 = 1.0 /  3.0;
-	const PdfT w_1 = 1.0 / 18.0;
-	const PdfT w_2 = 1.0 / 36.0;
+	const PdfT w_0 = F(1.0) /  F(3.0);
+	const PdfT w_1 = F(1.0) / F(18.0);
+	const PdfT w_2 = F(1.0) / F(36.0);
 
-	const PdfT w_1_x3 = w_1 * 3.0;	const PdfT w_1_nine_half = w_1 * 9.0 / 2.0;
-	const PdfT w_2_x3 = w_2 * 3.0;	const PdfT w_2_nine_half = w_2 * 9.0 / 2.0;
+	const PdfT w_1_x3 = w_1 * F(3.0);	const PdfT w_1_nine_half = w_1 * F(9.0) / F(2.0);
+	const PdfT w_2_x3 = w_2 * F(3.0);	const PdfT w_2_nine_half = w_2 * F(9.0) / F(2.0);
 
 
-	VPDFT VONE_HALF   = VSET(0.5);
-	VPDFT VTHREE_HALF = VSET(3.0 / 2.0);
+	VPDFT VONE_HALF   = VSET(F(0.5));
+	VPDFT VTHREE_HALF = VSET(F(3.0) / F(2.0));
 
 	VPDFT vw_1_indep, vw_2_indep;
 	VPDFT vw_0 = VSET(w_0);
@@ -427,8 +427,8 @@ static void KernelOdd(LatticeDesc * ld, KernelData * kd, CaseData * cd)  // {{{
 	Assert(kd != NULL);
 	Assert(cd != NULL);
 
-	Assert(cd->Omega > 0.0);
-	Assert(cd->Omega < 2.0);
+	Assert(cd->Omega > F(0.0));
+	Assert(cd->Omega < F(2.0));
 
 	KernelDataAa * kda  = KDA(kd);
 
@@ -450,18 +450,18 @@ static void KernelOdd(LatticeDesc * ld, KernelData * kd, CaseData * cd)  // {{{
 	PdfT omega = cd->Omega;
 	PdfT omegaEven = omega;
 
-	PdfT magicParam = 1.0 / 12.0;
-	PdfT omegaOdd = 1.0 / (0.5 + magicParam / (1.0 / omega - 0.5));
+	PdfT magicParam = F(1.0) / F(12.0);
+	PdfT omegaOdd = F(1.0) / (F(0.5) + magicParam / (F(1.0) / omega - F(0.5)));
 
-	const PdfT w_0 = 1.0 /  3.0;
-	const PdfT w_1 = 1.0 / 18.0;
-	const PdfT w_2 = 1.0 / 36.0;
+	const PdfT w_0 = F(1.0) /  F(3.0);
+	const PdfT w_1 = F(1.0) / F(18.0);
+	const PdfT w_2 = F(1.0) / F(36.0);
 
-	const PdfT w_1_x3 = w_1 * 3.0;	const PdfT w_1_nine_half = w_1 * 9.0 / 2.0;
-	const PdfT w_2_x3 = w_2 * 3.0;	const PdfT w_2_nine_half = w_2 * 9.0 / 2.0;
+	const PdfT w_1_x3 = w_1 * F(3.0);	const PdfT w_1_nine_half = w_1 * F(9.0) / F(2.0);
+	const PdfT w_2_x3 = w_2 * F(3.0);	const PdfT w_2_nine_half = w_2 * F(9.0) / F(2.0);
 
-	VPDFT VONE_HALF   = VSET(0.5);
-	VPDFT VTHREE_HALF = VSET(3.0 / 2.0);
+	VPDFT VONE_HALF   = VSET(F(0.5));
+	VPDFT VTHREE_HALF = VSET(F(3.0) / F(2.0));
 
 	VPDFT vw_1_indep, vw_2_indep;
 	VPDFT vw_0 = VSET(w_0);

@@ -39,8 +39,8 @@ void FNAME(D3Q19ListAaKernel)(LatticeDesc * ld, KernelData * kernelData, CaseDat
 	Assert(kernelData != NULL);
 	Assert(cd != NULL);
 
-	Assert(cd->Omega > 0.0);
-	Assert(cd->Omega < 2.0);
+	Assert(cd->Omega > F(0.0));
+	Assert(cd->Omega < F(2.0));
 
 	KernelData * kd = (KernelData *)kernelData;
 	KernelDataList * kdl = (KernelDataList *)kernelData;
@@ -51,19 +51,19 @@ void FNAME(D3Q19ListAaKernel)(LatticeDesc * ld, KernelData * kernelData, CaseDat
 	// 1/12: removes third-order advection error (best advection);
 	//  1/6: removes fourth-order diffusion error (best diffusion);
 	// 3/16: exact location of bounce back for poiseuille flow
-	PdfT magicParam = 1.0/12.0;
-	PdfT omegaOdd = 1.0/( 0.5 + magicParam/(1.0/omega - 0.5) );
+	PdfT magicParam = F(1.0)/F(12.0);
+	PdfT omegaOdd = F(1.0)/( F(0.5) + magicParam/(F(1.0)/omega - F(0.5)) );
 
-	PdfT evenPart = 0.0;
-	PdfT oddPart = 0.0;
-	PdfT dir_indep_trm = 0.0;
+	PdfT evenPart = F(0.0);
+	PdfT oddPart = F(0.0);
+	PdfT dir_indep_trm = F(0.0);
 
-	const PdfT w_0 = 1.0 /  3.0;
-	const PdfT w_1 = 1.0 / 18.0;
-	const PdfT w_2 = 1.0 / 36.0;
+	const PdfT w_0 = F(1.0) /  F(3.0);
+	const PdfT w_1 = F(1.0) / F(18.0);
+	const PdfT w_2 = F(1.0) / F(36.0);
 
-	const PdfT w_1_x3 = w_1 * 3.0;	const PdfT w_1_nine_half = w_1 * 9.0/2.0;	PdfT w_1_indep = 0.0;
-	const PdfT w_2_x3 = w_2 * 3.0;	const PdfT w_2_nine_half = w_2 * 9.0/2.0;	PdfT w_2_indep = 0.0;
+	const PdfT w_1_x3 = w_1 * F(3.0);	const PdfT w_1_nine_half = w_1 * F(9.0)/F(2.0);	PdfT w_1_indep = F(0.0);
+	const PdfT w_2_x3 = w_2 * F(3.0);	const PdfT w_2_nine_half = w_2 * F(9.0)/F(2.0);	PdfT w_2_indep = F(0.0);
 
 	PdfT ui;
 
@@ -107,7 +107,7 @@ void FNAME(D3Q19ListAaKernel)(LatticeDesc * ld, KernelData * kernelData, CaseDat
 
 		X_LIKWID_START("list-aa-even");
 
-	#ifdef _OPENMP
+#ifdef _OPENMP
 		#pragma omp parallel for default(none) \
 				shared(nFluid, nCells, kd, kdl, adjList, omegaOdd, omegaEven, src) \
 				private(ux, uy, uz, dens, adjListIndex, evenPart, oddPart, dir_indep_trm, w_1_indep, w_2_indep, ui,\
@@ -116,7 +116,12 @@ void FNAME(D3Q19ListAaKernel)(LatticeDesc * ld, KernelData * kernelData, CaseDat
 				  	pdf_NE, pdf_SE, pdf_SW, pdf_NW, \
 				  	pdf_T, pdf_TN, pdf_TE, pdf_TS, pdf_TW, \
 				  	pdf_B, pdf_BN, pdf_BE, pdf_BS, pdf_BW)
-	#endif
+#endif
+#ifdef INTEL_OPT_DIRECTIVES
+		#pragma ivdep
+		#pragma vector always
+		#pragma simd
+#endif
 		for (int index = 0; index < nFluid; ++index) {
 
 
@@ -160,7 +165,7 @@ void FNAME(D3Q19ListAaKernel)(LatticeDesc * ld, KernelData * kernelData, CaseDat
 				   pdf_T  + pdf_TN + pdf_TE + pdf_TS + pdf_TW +
 				   pdf_B  + pdf_BN + pdf_BE + pdf_BS + pdf_BW;
 
-			dir_indep_trm = dens - (ux * ux + uy * uy + uz * uz)*3.0/2.0;
+			dir_indep_trm = dens - (ux * ux + uy * uy + uz * uz)*F(3.0)/F(2.0);
 
 			// direction: w_0
 			src[I(index, D3Q19_C)             ]  = pdf_C - omegaEven*(pdf_C - w_0*dir_indep_trm);
@@ -169,20 +174,20 @@ void FNAME(D3Q19ListAaKernel)(LatticeDesc * ld, KernelData * kernelData, CaseDat
 			w_1_indep = w_1*dir_indep_trm;
 
 			ui = uy;
-			evenPart = omegaEven*( 0.5*(pdf_N + pdf_S) - ui*ui*w_1_nine_half - w_1_indep );
-			oddPart = omegaOdd*(0.5*(pdf_N - pdf_S) - ui*w_1_x3 );
+			evenPart = omegaEven*( F(0.5)*(pdf_N + pdf_S) - ui*ui*w_1_nine_half - w_1_indep );
+			oddPart = omegaOdd*(F(0.5)*(pdf_N - pdf_S) - ui*w_1_x3 );
 			src[I(index, D3Q19_S)]  = pdf_N - evenPart - oddPart;
 			src[I(index, D3Q19_N)]  = pdf_S - evenPart + oddPart;
 
 			ui = ux;
-			evenPart = omegaEven*( 0.5*(pdf_E + pdf_W) - ui*ui*w_1_nine_half - w_1_indep );
-			oddPart = omegaOdd*(0.5*(pdf_E - pdf_W) - ui*w_1_x3 );
+			evenPart = omegaEven*( F(0.5)*(pdf_E + pdf_W) - ui*ui*w_1_nine_half - w_1_indep );
+			oddPart = omegaOdd*(F(0.5)*(pdf_E - pdf_W) - ui*w_1_x3 );
 			src[I(index, D3Q19_W)]  = pdf_E - evenPart - oddPart;
 			src[I(index, D3Q19_E)]  = pdf_W - evenPart + oddPart;
 
 			ui = uz;
-			evenPart = omegaEven*( 0.5*(pdf_T + pdf_B) - ui*ui*w_1_nine_half - w_1_indep );
-			oddPart = omegaOdd*(0.5*(pdf_T - pdf_B) - ui*w_1_x3 );
+			evenPart = omegaEven*( F(0.5)*(pdf_T + pdf_B) - ui*ui*w_1_nine_half - w_1_indep );
+			oddPart = omegaOdd*(F(0.5)*(pdf_T - pdf_B) - ui*w_1_x3 );
 			src[I(index, D3Q19_B)]  = pdf_T - evenPart - oddPart;
 			src[I(index, D3Q19_T)]  = pdf_B - evenPart + oddPart;
 
@@ -190,38 +195,38 @@ void FNAME(D3Q19ListAaKernel)(LatticeDesc * ld, KernelData * kernelData, CaseDat
 			w_2_indep = w_2*dir_indep_trm;
 
 			ui = -ux + uy;
-			evenPart = omegaEven*( 0.5*(pdf_NW + pdf_SE) - ui*ui*w_2_nine_half - w_2_indep );
-			oddPart = omegaOdd*(0.5*(pdf_NW - pdf_SE) - ui*w_2_x3 );
+			evenPart = omegaEven*( F(0.5)*(pdf_NW + pdf_SE) - ui*ui*w_2_nine_half - w_2_indep );
+			oddPart = omegaOdd*(F(0.5)*(pdf_NW - pdf_SE) - ui*w_2_x3 );
 			src[I(index, D3Q19_SE)] = pdf_NW - evenPart - oddPart;
 			src[I(index, D3Q19_NW)] = pdf_SE - evenPart + oddPart;
 
 			ui = ux + uy;
-			evenPart = omegaEven*( 0.5*(pdf_NE + pdf_SW) - ui*ui*w_2_nine_half - w_2_indep );
-			oddPart = omegaOdd*(0.5*(pdf_NE - pdf_SW) - ui*w_2_x3 );
+			evenPart = omegaEven*( F(0.5)*(pdf_NE + pdf_SW) - ui*ui*w_2_nine_half - w_2_indep );
+			oddPart = omegaOdd*(F(0.5)*(pdf_NE - pdf_SW) - ui*w_2_x3 );
 			src[I(index, D3Q19_SW)] = pdf_NE - evenPart - oddPart;
 			src[I(index, D3Q19_NE)] = pdf_SW - evenPart + oddPart;
 
 			ui = -ux + uz;
-			evenPart = omegaEven*( 0.5*(pdf_TW + pdf_BE) - ui*ui*w_2_nine_half - w_2_indep );
-			oddPart = omegaOdd*(0.5*(pdf_TW - pdf_BE) - ui*w_2_x3 );
+			evenPart = omegaEven*( F(0.5)*(pdf_TW + pdf_BE) - ui*ui*w_2_nine_half - w_2_indep );
+			oddPart = omegaOdd*(F(0.5)*(pdf_TW - pdf_BE) - ui*w_2_x3 );
 			src[I(index, D3Q19_BE)] = pdf_TW - evenPart - oddPart;
 			src[I(index, D3Q19_TW)] = pdf_BE - evenPart + oddPart;
 
 			ui = ux + uz;
-			evenPart = omegaEven*( 0.5*(pdf_TE + pdf_BW) - ui*ui*w_2_nine_half - w_2_indep );
-			oddPart = omegaOdd*(0.5*(pdf_TE - pdf_BW) - ui*w_2_x3 );
+			evenPart = omegaEven*( F(0.5)*(pdf_TE + pdf_BW) - ui*ui*w_2_nine_half - w_2_indep );
+			oddPart = omegaOdd*(F(0.5)*(pdf_TE - pdf_BW) - ui*w_2_x3 );
 			src[I(index, D3Q19_BW)] = pdf_TE - evenPart - oddPart;
 			src[I(index, D3Q19_TE)] = pdf_BW - evenPart + oddPart;
 
 			ui = -uy + uz;
-			evenPart = omegaEven*( 0.5*(pdf_TS + pdf_BN) - ui*ui*w_2_nine_half - w_2_indep );
-			oddPart = omegaOdd*(0.5*(pdf_TS - pdf_BN) - ui*w_2_x3 );
+			evenPart = omegaEven*( F(0.5)*(pdf_TS + pdf_BN) - ui*ui*w_2_nine_half - w_2_indep );
+			oddPart = omegaOdd*(F(0.5)*(pdf_TS - pdf_BN) - ui*w_2_x3 );
 			src[I(index, D3Q19_BN)] = pdf_TS - evenPart - oddPart;
 			src[I(index, D3Q19_TS)] = pdf_BN - evenPart + oddPart;
 
 			ui = uy + uz;
-			evenPart = omegaEven*( 0.5*(pdf_TN + pdf_BS) - ui*ui*w_2_nine_half - w_2_indep );
-			oddPart = omegaOdd*(0.5*(pdf_TN - pdf_BS) - ui*w_2_x3 );
+			evenPart = omegaEven*( F(0.5)*(pdf_TN + pdf_BS) - ui*ui*w_2_nine_half - w_2_indep );
+			oddPart = omegaOdd*(F(0.5)*(pdf_TN - pdf_BS) - ui*w_2_x3 );
 			src[I(index, D3Q19_BS)] = pdf_TN - evenPart - oddPart;
 			src[I(index, D3Q19_TN)] = pdf_BS - evenPart + oddPart;
 
@@ -251,6 +256,9 @@ void FNAME(D3Q19ListAaKernel)(LatticeDesc * ld, KernelData * kernelData, CaseDat
 				  	pdf_T, pdf_TN, pdf_TE, pdf_TS, pdf_TW, \
 				  	pdf_B, pdf_BN, pdf_BE, pdf_BS, pdf_BW)
 #endif
+#ifdef INTEL_OPT_DIRECTIVES
+		#pragma ivdep
+#endif
 		for (int index = 0; index < nFluid; ++index) {
 
 
@@ -273,9 +281,9 @@ void FNAME(D3Q19ListAaKernel)(LatticeDesc * ld, KernelData * kernelData, CaseDat
 			int z = kdl->Coords[C_INDEX_Z(index)];
 
 			if (z == nZ - 4 && x > 3 && x < (nX - 4) && y > 3 && y < (nY - 4)) {
-				ux = 0.1 * 0.577;
-				uy = 0.0;
-				uz = 0.0;
+				ux = F(0.1) * F(0.5)77;
+				uy = F(0.0);
+				uz = F(0.0);
 			} else {
 #endif
 				ux = pdf_E + pdf_NE + pdf_SE + pdf_TE + pdf_BE -
@@ -294,7 +302,7 @@ void FNAME(D3Q19ListAaKernel)(LatticeDesc * ld, KernelData * kernelData, CaseDat
 				   pdf_T  + pdf_TN + pdf_TE + pdf_TS + pdf_TW +
 				   pdf_B  + pdf_BN + pdf_BE + pdf_BS + pdf_BW;
 
-			dir_indep_trm = dens - (ux * ux + uy * uy + uz * uz)*3.0/2.0;
+			dir_indep_trm = dens - (ux * ux + uy * uy + uz * uz)*F(3.0)/F(2.0);
 
 			adjListIndex = index * N_D3Q19_IDX;
 
@@ -305,20 +313,20 @@ void FNAME(D3Q19ListAaKernel)(LatticeDesc * ld, KernelData * kernelData, CaseDat
 			w_1_indep = w_1*dir_indep_trm;
 
 			ui = uy;
-			evenPart = omegaEven*( 0.5*(pdf_N + pdf_S) - ui*ui*w_1_nine_half - w_1_indep );
-			oddPart = omegaOdd*(0.5*(pdf_N - pdf_S) - ui*w_1_x3 );
+			evenPart = omegaEven*( F(0.5)*(pdf_N + pdf_S) - ui*ui*w_1_nine_half - w_1_indep );
+			oddPart = omegaOdd*(F(0.5)*(pdf_N - pdf_S) - ui*w_1_x3 );
 			src[adjList[adjListIndex + D3Q19_N]]  = pdf_N - evenPart - oddPart;
 			src[adjList[adjListIndex + D3Q19_S]]  = pdf_S - evenPart + oddPart;
 
 			ui = ux;
-			evenPart = omegaEven*( 0.5*(pdf_E + pdf_W) - ui*ui*w_1_nine_half - w_1_indep );
-			oddPart = omegaOdd*(0.5*(pdf_E - pdf_W) - ui*w_1_x3 );
+			evenPart = omegaEven*( F(0.5)*(pdf_E + pdf_W) - ui*ui*w_1_nine_half - w_1_indep );
+			oddPart = omegaOdd*(F(0.5)*(pdf_E - pdf_W) - ui*w_1_x3 );
 			src[adjList[adjListIndex + D3Q19_E]]  = pdf_E - evenPart - oddPart;
 			src[adjList[adjListIndex + D3Q19_W]]  = pdf_W - evenPart + oddPart;
 
 			ui = uz;
-			evenPart = omegaEven*( 0.5*(pdf_T + pdf_B) - ui*ui*w_1_nine_half - w_1_indep );
-			oddPart = omegaOdd*(0.5*(pdf_T - pdf_B) - ui*w_1_x3 );
+			evenPart = omegaEven*( F(0.5)*(pdf_T + pdf_B) - ui*ui*w_1_nine_half - w_1_indep );
+			oddPart = omegaOdd*(F(0.5)*(pdf_T - pdf_B) - ui*w_1_x3 );
 			src[adjList[adjListIndex + D3Q19_T]]  = pdf_T - evenPart - oddPart;
 			src[adjList[adjListIndex + D3Q19_B]]  = pdf_B - evenPart + oddPart;
 
@@ -326,38 +334,38 @@ void FNAME(D3Q19ListAaKernel)(LatticeDesc * ld, KernelData * kernelData, CaseDat
 			w_2_indep = w_2*dir_indep_trm;
 
 			ui = -ux + uy;
-			evenPart = omegaEven*( 0.5*(pdf_NW + pdf_SE) - ui*ui*w_2_nine_half - w_2_indep );
-			oddPart = omegaOdd*(0.5*(pdf_NW - pdf_SE) - ui*w_2_x3 );
+			evenPart = omegaEven*( F(0.5)*(pdf_NW + pdf_SE) - ui*ui*w_2_nine_half - w_2_indep );
+			oddPart = omegaOdd*(F(0.5)*(pdf_NW - pdf_SE) - ui*w_2_x3 );
 			src[adjList[adjListIndex + D3Q19_NW]] = pdf_NW - evenPart - oddPart;
 			src[adjList[adjListIndex + D3Q19_SE]] = pdf_SE - evenPart + oddPart;
 
 			ui = ux + uy;
-			evenPart = omegaEven*( 0.5*(pdf_NE + pdf_SW) - ui*ui*w_2_nine_half - w_2_indep );
-			oddPart = omegaOdd*(0.5*(pdf_NE - pdf_SW) - ui*w_2_x3 );
+			evenPart = omegaEven*( F(0.5)*(pdf_NE + pdf_SW) - ui*ui*w_2_nine_half - w_2_indep );
+			oddPart = omegaOdd*(F(0.5)*(pdf_NE - pdf_SW) - ui*w_2_x3 );
 			src[adjList[adjListIndex + D3Q19_NE]] = pdf_NE - evenPart - oddPart;
 			src[adjList[adjListIndex + D3Q19_SW]] = pdf_SW - evenPart + oddPart;
 
 			ui = -ux + uz;
-			evenPart = omegaEven*( 0.5*(pdf_TW + pdf_BE) - ui*ui*w_2_nine_half - w_2_indep );
-			oddPart = omegaOdd*(0.5*(pdf_TW - pdf_BE) - ui*w_2_x3 );
+			evenPart = omegaEven*( F(0.5)*(pdf_TW + pdf_BE) - ui*ui*w_2_nine_half - w_2_indep );
+			oddPart = omegaOdd*(F(0.5)*(pdf_TW - pdf_BE) - ui*w_2_x3 );
 			src[adjList[adjListIndex + D3Q19_TW]] = pdf_TW - evenPart - oddPart;
 			src[adjList[adjListIndex + D3Q19_BE]] = pdf_BE - evenPart + oddPart;
 
 			ui = ux + uz;
-			evenPart = omegaEven*( 0.5*(pdf_TE + pdf_BW) - ui*ui*w_2_nine_half - w_2_indep );
-			oddPart = omegaOdd*(0.5*(pdf_TE - pdf_BW) - ui*w_2_x3 );
+			evenPart = omegaEven*( F(0.5)*(pdf_TE + pdf_BW) - ui*ui*w_2_nine_half - w_2_indep );
+			oddPart = omegaOdd*(F(0.5)*(pdf_TE - pdf_BW) - ui*w_2_x3 );
 			src[adjList[adjListIndex + D3Q19_TE]] = pdf_TE - evenPart - oddPart;
 			src[adjList[adjListIndex + D3Q19_BW]] = pdf_BW - evenPart + oddPart;
 
 			ui = -uy + uz;
-			evenPart = omegaEven*( 0.5*(pdf_TS + pdf_BN) - ui*ui*w_2_nine_half - w_2_indep );
-			oddPart = omegaOdd*(0.5*(pdf_TS - pdf_BN) - ui*w_2_x3 );
+			evenPart = omegaEven*( F(0.5)*(pdf_TS + pdf_BN) - ui*ui*w_2_nine_half - w_2_indep );
+			oddPart = omegaOdd*(F(0.5)*(pdf_TS - pdf_BN) - ui*w_2_x3 );
 			src[adjList[adjListIndex + D3Q19_TS]] = pdf_TS - evenPart - oddPart;
 			src[adjList[adjListIndex + D3Q19_BN]] = pdf_BN - evenPart + oddPart;
 
 			ui = uy + uz;
-			evenPart = omegaEven*( 0.5*(pdf_TN + pdf_BS) - ui*ui*w_2_nine_half - w_2_indep );
-			oddPart = omegaOdd*(0.5*(pdf_TN - pdf_BS) - ui*w_2_x3 );
+			evenPart = omegaEven*( F(0.5)*(pdf_TN + pdf_BS) - ui*ui*w_2_nine_half - w_2_indep );
+			oddPart = omegaOdd*(F(0.5)*(pdf_TN - pdf_BS) - ui*w_2_x3 );
 			src[adjList[adjListIndex + D3Q19_TN]] = pdf_TN - evenPart - oddPart;
 			src[adjList[adjListIndex + D3Q19_BS]] = pdf_BS - evenPart + oddPart;
 

@@ -1,7 +1,7 @@
 # --------------------------------------------------------------------------
 #
 # Copyright
-#   Markus Wittmann, 2016-2017
+#   Markus Wittmann, 2016-2018
 #   RRZE, University of Erlangen-Nuremberg, Germany
 #   markus.wittmann -at- fau.de or hpc -at- rrze.fau.de
 #
@@ -33,6 +33,5 @@ all: main
 main: main.rst
 #main.css
 	[ -d html ] || mkdir -p html
-#    rst2html --stylesheet=html4css1.css,main.css $< html/$@.html
-	rst2html --stylesheet=html4css1.css,main.css $< html/$@.html
+	rst2html --stylesheet=html4css1.css,main.css $< $@.html
 

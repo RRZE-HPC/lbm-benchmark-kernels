@@ -69,7 +69,7 @@
 				   pdf_T  + pdf_TN + pdf_TE + pdf_TS + pdf_TW +
 				   pdf_B  + pdf_BN + pdf_BE + pdf_BS + pdf_BW;
 
-			dir_indep_trm = dens - (ux * ux + uy * uy + uz * uz) * 3.0 / 2.0;
+			dir_indep_trm = dens - (ux * ux + uy * uy + uz * uz) * F(3.0) / F(2.0);
 
 			w_1_indep = w_1 * dir_indep_trm;
 			w_2_indep = w_2 * dir_indep_trm;
@@ -89,8 +89,8 @@
 				w_1_indep          = tmpArray[TMP_INDEX(index, TMP_W1)]; \
 				\
 				ui = _vel; \
-				evenPart = omegaEven * (0.5 * (JOIN(pdf_,_dir1) + JOIN(pdf_,_dir2)) - ui * ui * w_1_nine_half - w_1_indep); \
-				oddPart  = omegaOdd  * (0.5 * (JOIN(pdf_,_dir1) - JOIN(pdf_,_dir2)) - ui * w_1_x3); \
+				evenPart = omegaEven * (F(0.5) * (JOIN(pdf_,_dir1) + JOIN(pdf_,_dir2)) - ui * ui * w_1_nine_half - w_1_indep); \
+				oddPart  = omegaOdd  * (F(0.5) * (JOIN(pdf_,_dir1) - JOIN(pdf_,_dir2)) - ui * w_1_x3); \
 				dst[I(index + blockedIndex, JOIN(D3Q19_,_dir1) )]  = JOIN(pdf_,_dir1) - evenPart - oddPart; \
 				tmpArray[TMP_INDEX(index, JOIN(D3Q19_,_dir2))]     = JOIN(pdf_,_dir2) - evenPart + oddPart; \
 			} \
@@ -107,8 +107,8 @@
 				w_2_indep = tmpArray[TMP_INDEX(index, TMP_W2)]; \
 				\
 				ui = _expr; \
-				evenPart = omegaEven * (0.5 * (JOIN(pdf_,_dir1) + JOIN(pdf_,_dir2)) - ui * ui * w_2_nine_half - w_2_indep); \
-				oddPart  = omegaOdd  * (0.5 * (JOIN(pdf_,_dir1) - JOIN(pdf_,_dir2)) - ui * w_2_x3); \
+				evenPart = omegaEven * (F(0.5) * (JOIN(pdf_,_dir1) + JOIN(pdf_,_dir2)) - ui * ui * w_2_nine_half - w_2_indep); \
+				oddPart  = omegaOdd  * (F(0.5) * (JOIN(pdf_,_dir1) - JOIN(pdf_,_dir2)) - ui * w_2_x3); \
 				dst[I(index + blockedIndex, JOIN(D3Q19_,_dir1))] = JOIN(pdf_,_dir1) - evenPart - oddPart; \
 				tmpArray[TMP_INDEX(index, JOIN(D3Q19_,_dir2))]     = JOIN(pdf_,_dir2) - evenPart + oddPart; \
 			} \

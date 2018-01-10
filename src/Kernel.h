@@ -60,9 +60,15 @@
 #endif
 
 
+#ifdef PRECISION_DP
+	typedef double 	PdfT;
+#elif defined(PRECISION_SP)
+	typedef float   PdfT;
+#else
+	#error PRECISION must be defined as dp or sp.
+#endif
 
-typedef double 	PdfT;
-
+	#define F(number)	(PdfT)(number)
 
 
 #define D3Q19

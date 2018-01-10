@@ -30,6 +30,7 @@
 #include "BenchKernelD3Q19.h"
 #include "BenchKernelD3Q19Aa.h"
 #include "BenchKernelD3Q19AaVec.h"
+#include "BenchKernelD3Q19AaVecSl.h"
 #include "BenchKernelD3Q19List.h"
 #include "BenchKernelD3Q19ListAa.h"
 #include "BenchKernelD3Q19ListAaRia.h"
@@ -149,7 +150,13 @@ KernelFunctions g_kernels[] =
 		.Name	= "aa-vec-soa",
 		.Init	= D3Q19AaVecInit_AaSoA,
 		.Deinit	= D3Q19AaVecDeinit_AaSoA
+	},
+	{
+		.Name	= "aa-vec-sl-soa",
+		.Init	= D3Q19AaVecSlInit_AaSoA,
+		.Deinit	= D3Q19AaVecSlDeinit_AaSoA
 	}
+
 
 };
 

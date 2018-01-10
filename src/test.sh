@@ -30,6 +30,9 @@ set -e
 
 XTag="-test"
 
+# How many parallel processes during make.
+NProc="10"
+
 Build=release
 
 if [ "$#" -lt 1 ]; then
@@ -53,11 +56,54 @@ fi
 Config="$1"
 
 make clean-all
-make -j CONFIG=$Config TAG=$XTag-debug
-make -j CONFIG=$Config BUILD=$Build TAG=$XTag-v VERIFICATION=on
-make -j CONFIG=$Config BUILD=$Build TAG=$XTag-b BENCHMARK=on
 
-BinaryV="../bin/lbmbenchk-$Config-$Build$XTag-v"
-BinaryB="../bin/lbmbenchk-$Config-$Build$XTag-b"
+make -j $NProc PRECISION=dp CONFIG=$Config TAG=$XTag-debug
+make -j $NProc PRECISION=dp CONFIG=$Config BUILD=$Build TAG=$XTag-v VERIFICATION=on
+make -j $NProc PRECISION=dp CONFIG=$Config BUILD=$Build TAG=$XTag-b BENCHMARK=on
 
-./test-verification.sh "$BinaryV"
+BinaryVDp="../bin/lbmbenchk-$Config-$Build-dp$XTag-v"
+BinaryBDp="../bin/lbmbenchk-$Config-$Build-dp$XTag-b"
+
+
+make -j $NProc PRECISION=sp CONFIG=$Config TAG=$XTag-debug
+make -j $NProc PRECISION=sp CONFIG=$Config BUILD=$Build TAG=$XTag-v VERIFICATION=on
+make -j $NProc PRECISION=sp CONFIG=$Config BUILD=$Build TAG=$XTag-b BENCHMARK=on
+
+BinaryVSp="../bin/lbmbenchk-$Config-$Build-sp$XTag-v"
+BinaryBSp="../bin/lbmbenchk-$Config-$Build-sp$XTag-b"
+
+
+echo "#"
+echo "# [test.sh] ./test-verification.sh \"$BinaryVDp\""
+echo "#"
+
+./test-verification.sh "$BinaryVDp"
+
+ExitCodeDp="$?"
+
+echo "#"
+echo "# [test.sh] ./test-verification.sh \"$BinaryVSp\""
+echo "#"
+
+./test-verification.sh "$BinaryVSp"
+
+ExitCodeSp="$?"
+
+ResultDp="errors occurred"
+ResultSp="errors occurred"
+
+if [ "$ExitCodeDp" == "0" ]; then ResultDp="OK"; fi
+if [ "$ExitCodeSp" == "0" ]; then ResultSp="OK"; fi
+
+echo "#"
+echo "# [test.sh] test   double precision: $ResultDp   single precision: $ResultSp"
+echo "#"
+
+ExitCode="0"
+
+if [ "$ExitCodeDp" != 0 -o "$ExitCodeSp" != 0 ]; then
+  ExitCode="1"
+fi
+
+exit "$ExitCode"
+

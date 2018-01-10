@@ -133,14 +133,14 @@ int main(int argc, char * argv[])
 
 	CaseData cd;
 
-	cd.MaxIterations 		= 1000;
-	cd.RhoIn		 		= 1.0;
-	cd.RhoOut 		 		= 1.0;
-	cd.Omega		 		= 1.0;
+	cd.MaxIterations 		= 10;
+	cd.RhoIn		 		= F(1.0);
+	cd.RhoOut 		 		= F(1.0);
+	cd.Omega		 		= F(1.0);
 	cd.VtkOutput	 		= 0;
 	cd.VtkModulus    		= 100;
 	cd.StatisticsModulus 	= 100;
-	cd.XForce				= 0.00001;
+	cd.XForce				= F(0.00001);
 	kernelToUse				= "push-soa";
 
 	Parameters p;
@@ -156,7 +156,7 @@ int main(int argc, char * argv[])
     printf("This program comes with ABSOLUTELY NO WARRANTY; for details see LICENSE.\n");
 	printf("This is free software, and you are welcome to redistribute it under certain conditions.\n");
 	printf("\n");
-	printf("LBM Benchmark Kernels %d.%d, compiled %s %s, type: %s\n",
+	printf("# LBM Benchmark Kernels %d.%d, compiled %s %s, type: %s\n",
 		LBM_BENCH_KERNELS_VERSION_MAJOR, LBM_BENCH_KERNELS_VERSION_MINOR, __DATE__, __TIME__,
 #ifdef VERIFICATION
 		"verification"
@@ -208,40 +208,40 @@ int main(int argc, char * argv[])
 		else if (ARG_IS("-rho-in") ||ARG_IS("--rho-in")) {
 			NEXT_ARG_PRESENT();
 
-			cd.RhoIn = strtod(argv[++i], NULL);
+			cd.RhoIn = F(strtod(argv[++i], NULL));
 		}
 		else if (ARG_IS("-rho-out") ||ARG_IS("--rho-out")) {
 			NEXT_ARG_PRESENT();
 
-			cd.RhoOut = strtod(argv[++i], NULL);
+			cd.RhoOut = F(strtod(argv[++i], NULL));
 		}
 		else if (ARG_IS("-omega") ||ARG_IS("--omega")) {
 			NEXT_ARG_PRESENT();
 
-			cd.Omega = strtod(argv[++i], NULL);
+			cd.Omega = F(strtod(argv[++i], NULL));
 		}
 		else if (ARG_IS("-x-force") ||ARG_IS("--x-force")) {
 			NEXT_ARG_PRESENT();
 
-			cd.XForce = strtod(argv[++i], NULL);
+			cd.XForce = F(strtod(argv[++i], NULL));
 		}
 		else if (ARG_IS("-verify") || ARG_IS("--verify")) {
 #ifdef VERIFICATION
 
 			// Choose this preset for verification. As geometry type "box" is
-			// used but x and y direction are made pridoc.
+			// used but x and y direction are made periodic.
 			// Everything else can be altered, but enough iterations should be
 			// performed in order to receive a fully developed flow field.
 			verify = 1;
 
-			cd.Omega  = 1.0;
-			cd.RhoIn  = 1.0;
-			cd.RhoOut = 1.0;
+			cd.Omega  = F(1.0);
+			cd.RhoIn  = F(1.0);
+			cd.RhoOut = F(1.0);
 			geometryType = "box";
 			dims[0] = 16;
 			dims[1] = 16;
 			dims[2] = 16;
-			cd.XForce = 0.00001;
+			cd.XForce = F(0.00001);
 			cd.MaxIterations = 1000;
 			periodic[0] = 1;
 			periodic[1] = 1;
@@ -407,11 +407,10 @@ int main(int argc, char * argv[])
 	omp_set_num_threads(nThreads);
 #endif
 
- 	LatticeDesc ld;
-
-	GeoCreateByStr(geometryType, dims, periodic, &ld);
-
 	const char * defines[] = {
+#ifdef DEBUG
+	"DEBUG",
+#endif
 #ifdef VTK_OUTPUT
 	"VTK_OUTPUT",
 #endif
@@ -427,40 +426,71 @@ int main(int argc, char * argv[])
 #ifdef HAVE_LIKWID
 	"HAVE_LIKWID",
 #endif
+#ifdef INTEL_OPT_DIRECTIVES
+	"INTEL_OPT_DIRECTIVES",
+#endif
 	};
 
-	printf("#  defines:           ");
+	printf("#\n");
+
+#ifdef PRECISION_DP
+	printf("# - floating point:    double precision (%lu b, PRECISION_DP defined)\n", sizeof(PdfT));
+#elif defined(PRECISION_SP)
+	printf("# - floating point:    single precision (%lu b, PRECISION_SP defined)\n", sizeof(PdfT));
+#else
+	printf("# - floating point:    UNKNOWN (%lu b)\n", sizeof(PdfT));
+#endif
+
+#ifdef VECTOR_AVX
+	printf("# - intrinsics:        AVX (VECTOR_AVX defined)\n");
+#elif defined(VECTOR_SSE)
+	printf("# - intrinsics:        SSE (VECTOR_SSE defined)\n");
+#else
+	printf("# - intrinsics:        UNKNOWN\n");
+#endif
+
+	printf("# - defines:           ");
 	for (int j = 0; j < N_ELEMS(defines); ++j) {
 		printf("%s ", defines[j]);
 	}
 	printf("\n");
 
-	printf("#  nodes total:       % 10d\n", ld.nObst + ld.nFluid);
-	printf("#  nodes fluid:       % 10d (including inlet & outlet)\n", ld.nFluid);
-	printf("#  nodes obstacles:   % 10d\n", ld.nObst);
-	printf("#  nodes inlet:       % 10d\n", ld.nInlet);
-	printf("#  nodes outlet:      % 10d\n", ld.nOutlet);
-	printf("#  periodicity:       x: %d y: %d z: %d\n", ld.PeriodicX, ld.PeriodicY, ld.PeriodicZ);
+#ifdef __x86_64__
+	printf("# - fp status:         DAZ: %d  FTZ: %d\n", FpGetDaz(), FpGetFtz());
+#endif
+
+	printf("# - iterations:        %d\n", cd.MaxIterations);
+
+ 	LatticeDesc ld;
+
+	GeoCreateByStr(geometryType, dims, periodic, &ld);
+
+	printf("# - geometry:\n");
+	printf("#   type:              %s\n", ld.Name);
+	printf("#   dimensions:        %d x %d x %d (x, y, z)\n", ld.Dims[0], ld.Dims[1], ld.Dims[2]);
+
+	printf("#   nodes total:       %d\n", ld.nObst + ld.nFluid);
+	printf("#   nodes fluid:       %d (including inlet & outlet)\n", ld.nFluid);
+	printf("#   nodes obstacles:   %d\n", ld.nObst);
+	printf("#   nodes inlet:       %d\n", ld.nInlet);
+	printf("#   nodes outlet:      %d\n", ld.nOutlet);
+	printf("#   periodicity:       x: %d y: %d z: %d\n", ld.PeriodicX, ld.PeriodicY, ld.PeriodicZ);
 
 #ifdef VTK_OUTPUT
-	printf("#  VTK output:         %d (every %d iteration)\n", cd.VtkOutput, cd.VtkModulus);
+	printf("# - VTK output:        %d (every %d iteration)\n", cd.VtkOutput, cd.VtkModulus);
 #endif
 #ifdef STATISTICS
-	printf("#  statistics:         every %d iteration\n", cd.StatisticsModulus);
+	printf("# - statistics:        every %d iteration\n", cd.StatisticsModulus);
 #endif
 
-	printf("#  omega:             %f\n", cd.Omega);
-	printf("#  initial density at inlet/outlet:\n");
-	printf("#    rho in:          %e\n", cd.RhoIn);
-    printf("#    rho out:         %e\n", cd.RhoOut);
-	printf("# iterations:         %d\n", cd.MaxIterations);
-
-#ifdef __x86_64__
-	printf("# fp status:          DAZ: %d  FTZ: %d\n", FpGetDaz(), FpGetFtz());
-#endif
+	printf("# - flow:\n");
+	printf("#   omega:             %f\n", cd.Omega);
+	printf("#   initial density at inlet/outlet:\n");
+	printf("#     rho in:          %e\n", cd.RhoIn);
+    printf("#     rho out:         %e\n", cd.RhoOut);
 
 #ifdef _OPENMP
-	printf("# OpenMP threads:     %d\n", omp_get_max_threads());
+	printf("# - OpenMP threads:    %d\n", omp_get_max_threads());
 
 	if (pinString != NULL) {
 		#pragma omp parallel
@@ -482,7 +512,7 @@ int main(int argc, char * argv[])
 			#pragma omp for ordered
 			for (int i = 0; i < omp_get_num_threads(); ++i) {
 				#pragma omp ordered
-				printf("# thread %2d  pinned to core(s):  %s\n", threadId, cpuList);
+				printf("#   thread %2d  pinned to core(s):  %s\n", threadId, cpuList);
 			}
 
 			free((void *)cpuList);
@@ -513,7 +543,7 @@ int main(int argc, char * argv[])
 	}
 
 	printf("#\n");
-	printf("# kernel:           %s\n", kf->Name);
+	printf("# - kernel:            %s\n", kf->Name);
 	printf("#\n");
 
 	// Initialize kernel by calling its own initialization function
@@ -553,13 +583,20 @@ int main(int argc, char * argv[])
 
 	double perf = (double)ld.nFluid * (double)cd.MaxIterations / duration / 1.e6;
 
-	printf("P:   %f MFLUP/s  t: %d  d: %f s  iter: %d  fnodes: %f x1e6  geo: %s  kernel: %s  %s\n",
+	printf("P:   %f MFLUP/s  t: %d  d: %f s  iter: %d  fnodes: %f x1e6  geo: %s  kernel: %s  %s  %s\n",
 		perf, nThreads, duration, cd.MaxIterations, ld.nFluid / 1e6,
 		geometryType, kernelToUse,
 #ifdef VERIFICATION
-		"VERIFICATION"
+		"VERIFICATION",
 #else
-		"B"
+		"B",
+#endif
+#ifdef PRECISION_DP
+		"dp"
+#elif defined(PRECISION_SP)
+		"sp"
+#else
+		"unknown-precision"
 #endif
 	);
 

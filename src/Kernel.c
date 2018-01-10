@@ -68,21 +68,21 @@ void KernelComputeBoundaryConditions(KernelData * kd, LatticeDesc * ld, CaseData
 	Assert(ld != NULL);
 	Assert(cd != NULL);
 
-	Assert(cd->RhoIn  > 0.0);
-	Assert(cd->RhoOut > 0.0);
+	Assert(cd->RhoIn  > F(0.0));
+	Assert(cd->RhoOut > F(0.0));
 
 	PdfT rho_in         = cd->RhoIn;
 	PdfT rho_out        = cd->RhoOut;
-	PdfT rho_in_inv     = 1.0 / rho_in;
-	PdfT rho_out_inv    = 1.0 / rho_out;
-	PdfT indep_ux       = 0.0;
+	PdfT rho_in_inv     = F(1.0) / rho_in;
+	PdfT rho_out_inv    = F(1.0) / rho_out;
+	PdfT indep_ux       = F(0.0);
 
 	PdfT dens;
 	PdfT ux;
 
-	const PdfT one_third  = 1.0 / 3.0;
-	const PdfT one_fourth = 1.0 / 4.0;
-	const PdfT one_sixth  = 1.0 / 6.0;
+	const PdfT one_third  = F(1.0) / F(3.0);
+	const PdfT one_fourth = F(1.0) / F(4.0);
+	const PdfT one_sixth  = F(1.0) / F(6.0);
 
 	PdfT pdfs[N_D3Q19];
 
@@ -126,10 +126,10 @@ void KernelComputeBoundaryConditions(KernelData * kd, LatticeDesc * ld, CaseData
 
 				dens = rho_in;
 
-				ux = 1 - (pdfs[D3Q19_C]  +
+				ux = F(1.0) - (pdfs[D3Q19_C]  +
 						(pdfs[D3Q19_T]  + pdfs[D3Q19_B]  + pdfs[D3Q19_S]  + pdfs[D3Q19_N]) +
 						(pdfs[D3Q19_TS] + pdfs[D3Q19_BS] + pdfs[D3Q19_TN] + pdfs[D3Q19_BN]) +
-						2 * (pdfs[D3Q19_SW] + pdfs[D3Q19_TW] + pdfs[D3Q19_W] + pdfs[D3Q19_BW] + pdfs[D3Q19_NW])) * rho_in_inv;
+						F(2.0) * (pdfs[D3Q19_SW] + pdfs[D3Q19_TW] + pdfs[D3Q19_W] + pdfs[D3Q19_BW] + pdfs[D3Q19_NW])) * rho_in_inv;
 
 				indep_ux = one_sixth * dens * ux;
 
@@ -176,10 +176,10 @@ void KernelComputeBoundaryConditions(KernelData * kd, LatticeDesc * ld, CaseData
 
 				dens = rho_out;
 
-				ux = -1 + (pdfs[D3Q19_C] +
+				ux = F(-1.0) + (pdfs[D3Q19_C] +
 						(pdfs[D3Q19_T]  + pdfs[D3Q19_B]  + pdfs[D3Q19_S]  + pdfs[D3Q19_N]) +
 						(pdfs[D3Q19_TS] + pdfs[D3Q19_BS] + pdfs[D3Q19_TN] + pdfs[D3Q19_BN]) +
-						2 * (pdfs[D3Q19_NE] + pdfs[D3Q19_BE] + pdfs[D3Q19_E] + pdfs[D3Q19_TE] + pdfs[D3Q19_SE])) * rho_out_inv;
+						F(2.0) * (pdfs[D3Q19_NE] + pdfs[D3Q19_BE] + pdfs[D3Q19_E] + pdfs[D3Q19_TE] + pdfs[D3Q19_SE])) * rho_out_inv;
 				indep_ux = one_sixth * dens * ux;
 
 				pdfs[D3Q19_W ] = pdfs[D3Q19_E] - one_third * dens * ux;
@@ -234,13 +234,16 @@ PdfT KernelDensity(KernelData * kd, LatticeDesc * ld)
 
 					kd->GetNode(kd, x, y, z, pdfs);
 
+					PdfT localDensity = F(0.0);
+
 					for(int d = 0; d < N_D3Q19; ++d) {
 // 						if (pdfs[d] < 0.0) {
 // 							printf("# %d %d %d %d < 0 %e %s\n", x, y, z, d, pdfs[d], D3Q19_NAMES[d]);
 // 	exit(1);
 // 						}
-						density += pdfs[d];
+						localDensity += pdfs[d];
 					}
+					density += localDensity;
 				}
 
 			}
@@ -259,22 +262,22 @@ void KernelSetInitialDensity(LatticeDesc * ld, KernelData * kd, CaseData * cd)
 	PdfT rho_in = cd->RhoIn;
 	PdfT rho_out = cd->RhoOut;
 
-	PdfT ux = 0.0;
-	PdfT uy = 0.0;
-	PdfT uz = 0.0;
-	PdfT dens = 1.0;
+	PdfT ux   = F(0.0);
+	PdfT uy   = F(0.0);
+	PdfT uz   = F(0.0);
+	PdfT dens = F(1.0);
 
 	PdfT omega = cd->Omega;
 
-	PdfT w_0 = 1.0 /  3.0;
-	PdfT w_1 = 1.0 / 18.0;
-	PdfT w_2 = 1.0 / 36.0;
+	PdfT w_0 = F(1.0) / F( 3.0);
+	PdfT w_1 = F(1.0) / F(18.0);
+	PdfT w_2 = F(1.0) / F(36.0);
 
 	PdfT dir_indep_trm;
-	PdfT omega_w0  = 3.0 * w_0 * omega;
-	PdfT omega_w1  = 3.0 * w_1 * omega;
-	PdfT omega_w2  = 3.0 * w_2 * omega;
-	PdfT one_third = 1.0 / 3.0;
+	PdfT omega_w0  = F(3.0) * w_0 * omega;
+	PdfT omega_w1  = F(3.0) * w_1 * omega;
+	PdfT omega_w2  = F(3.0) * w_2 * omega;
+	PdfT one_third = F(1.0) / F(3.0);
 
 	int nX = lDims[0];
 	int nY = lDims[1];
@@ -290,43 +293,43 @@ void KernelSetInitialDensity(LatticeDesc * ld, KernelData * kd, CaseData * cd)
 		if (ld->Lattice[L_INDEX_4(ld->Dims, x, y, z)] != LAT_CELL_OBSTACLE) {
 	// TODO: fix later.
 	//		if((caseData->geoType == GEO_TYPE_CHANNEL) || (caseData->geoType == GEO_TYPE_RCHANNEL))
-				dens = rho_in + (rho_out - rho_in)*(x)/(nX-1.0);
+			dens = rho_in + (rho_out - rho_in) * (x) / (nX - F(1.0));
 
 			#define SQR(a) ((a)*(a))
 
-			dir_indep_trm = one_third * dens - 0.5 * (ux * ux + uy * uy + uz * uz);
+			dir_indep_trm = one_third * dens - F(0.5) * (ux * ux + uy * uy + uz * uz);
 
 			pdfs[D3Q19_C]  = omega_w0 * (dir_indep_trm);
 
-			pdfs[D3Q19_NW] = omega_w2 * (dir_indep_trm - (ux - uy) + 1.5 * SQR(ux - uy));
-			pdfs[D3Q19_SE] = omega_w2 * (dir_indep_trm + (ux - uy) + 1.5 * SQR(ux - uy));
+			pdfs[D3Q19_NW] = omega_w2 * (dir_indep_trm - (ux - uy) + F(1.5) * SQR(ux - uy));
+			pdfs[D3Q19_SE] = omega_w2 * (dir_indep_trm + (ux - uy) + F(1.5) * SQR(ux - uy));
 
-			pdfs[D3Q19_NE] = omega_w2 * (dir_indep_trm + (ux + uy) + 1.5 * SQR(ux + uy));
-			pdfs[D3Q19_SW] = omega_w2 * (dir_indep_trm - (ux + uy) + 1.5 * SQR(ux + uy));
-
-
-			pdfs[D3Q19_TW] = omega_w2 * (dir_indep_trm - (ux - uz) + 1.5 * SQR(ux - uz));
-			pdfs[D3Q19_BE] = omega_w2 * (dir_indep_trm + (ux - uz) + 1.5 * SQR(ux - uz));
-
-			pdfs[D3Q19_TE] = omega_w2 * (dir_indep_trm + (ux + uz) + 1.5 * SQR(ux + uz));
-			pdfs[D3Q19_BW] = omega_w2 * (dir_indep_trm - (ux + uz) + 1.5 * SQR(ux + uz));
+			pdfs[D3Q19_NE] = omega_w2 * (dir_indep_trm + (ux + uy) + F(1.5) * SQR(ux + uy));
+			pdfs[D3Q19_SW] = omega_w2 * (dir_indep_trm - (ux + uy) + F(1.5) * SQR(ux + uy));
 
 
-			pdfs[D3Q19_TS] = omega_w2 * (dir_indep_trm - (uy - uz) + 1.5 * SQR(uy - uz));
-			pdfs[D3Q19_BN] = omega_w2 * (dir_indep_trm + (uy - uz) + 1.5 * SQR(uy - uz));
+			pdfs[D3Q19_TW] = omega_w2 * (dir_indep_trm - (ux - uz) + F(1.5) * SQR(ux - uz));
+			pdfs[D3Q19_BE] = omega_w2 * (dir_indep_trm + (ux - uz) + F(1.5) * SQR(ux - uz));
 
-			pdfs[D3Q19_TN] = omega_w2 * (dir_indep_trm + (uy + uz) + 1.5 * SQR(uy + uz));
-			pdfs[D3Q19_BS] = omega_w2 * (dir_indep_trm - (uy + uz) + 1.5 * SQR(uy + uz));
+			pdfs[D3Q19_TE] = omega_w2 * (dir_indep_trm + (ux + uz) + F(1.5) * SQR(ux + uz));
+			pdfs[D3Q19_BW] = omega_w2 * (dir_indep_trm - (ux + uz) + F(1.5) * SQR(ux + uz));
 
 
-			pdfs[D3Q19_N]  = omega_w1 * (dir_indep_trm + uy + 1.5 * SQR(uy));
-			pdfs[D3Q19_S]  = omega_w1 * (dir_indep_trm - uy + 1.5 * SQR(uy));
+			pdfs[D3Q19_TS] = omega_w2 * (dir_indep_trm - (uy - uz) + F(1.5) * SQR(uy - uz));
+			pdfs[D3Q19_BN] = omega_w2 * (dir_indep_trm + (uy - uz) + F(1.5) * SQR(uy - uz));
 
-			pdfs[D3Q19_E]  = omega_w1 * (dir_indep_trm + ux + 1.5 * SQR(ux));
-			pdfs[D3Q19_W]  = omega_w1 * (dir_indep_trm - ux + 1.5 * SQR(ux));
+			pdfs[D3Q19_TN] = omega_w2 * (dir_indep_trm + (uy + uz) + F(1.5) * SQR(uy + uz));
+			pdfs[D3Q19_BS] = omega_w2 * (dir_indep_trm - (uy + uz) + F(1.5) * SQR(uy + uz));
 
-			pdfs[D3Q19_T]  = omega_w1 * (dir_indep_trm + uz + 1.5 * SQR(uz));
-			pdfs[D3Q19_B]  = omega_w1 * (dir_indep_trm - uz + 1.5 * SQR(uz));
+
+			pdfs[D3Q19_N]  = omega_w1 * (dir_indep_trm + uy + F(1.5) * SQR(uy));
+			pdfs[D3Q19_S]  = omega_w1 * (dir_indep_trm - uy + F(1.5) * SQR(uy));
+
+			pdfs[D3Q19_E]  = omega_w1 * (dir_indep_trm + ux + F(1.5) * SQR(ux));
+			pdfs[D3Q19_W]  = omega_w1 * (dir_indep_trm - ux + F(1.5) * SQR(ux));
+
+			pdfs[D3Q19_T]  = omega_w1 * (dir_indep_trm + uz + F(1.5) * SQR(uz));
+			pdfs[D3Q19_B]  = omega_w1 * (dir_indep_trm - uz + F(1.5) * SQR(uz));
 
 
 			kd->SetNode(kd, x, y, z, pdfs);
@@ -343,23 +346,23 @@ void KernelSetInitialVelocity(LatticeDesc * ld, KernelData * kd, CaseData * cd)
 
 	int * lDims = ld->Dims;
 
-	// TODO: ux is overriden below...
-	PdfT ux = 0.09; // caseData->initUx;
-	PdfT uy = 0.0; // caseData->initUy;
-	PdfT uz = 0.0; // caseData->initUz;
-	PdfT dens = 1.0;
+	// TODO: fix ux is overriden below
+	PdfT ux   = F(0.0);
+	PdfT uy   = F(0.0);
+	PdfT uz   = F(0.0);
+	PdfT dens = F(1.0);
 
 	PdfT omega = cd->Omega;
 
-	PdfT w_0 = 1.0 /  3.0;
-	PdfT w_1 = 1.0 / 18.0;
-	PdfT w_2 = 1.0 / 36.0;
+	PdfT w_0 = F(1.0) / F( 3.0);
+	PdfT w_1 = F(1.0) / F(18.0);
+	PdfT w_2 = F(1.0) / F(36.0);
 
 	PdfT dir_indep_trm;
-	PdfT omega_w0  = 3.0 * w_0 * omega;
-	PdfT omega_w1  = 3.0 * w_1 * omega;
-	PdfT omega_w2  = 3.0 * w_2 * omega;
-	PdfT one_third = 1.0 / 3.0;
+	PdfT omega_w0  = F(3.0) * w_0 * omega;
+	PdfT omega_w1  = F(3.0) * w_1 * omega;
+	PdfT omega_w2  = F(3.0) * w_2 * omega;
+	PdfT one_third = F(1.0) / F(3.0);
 
 	int nX = lDims[0];
 	int nY = lDims[1];
@@ -376,14 +379,14 @@ void KernelSetInitialVelocity(LatticeDesc * ld, KernelData * kd, CaseData * cd)
 
 		if (ld->Lattice[L_INDEX_4(ld->Dims, x, y, z)] == LAT_CELL_FLUID) {
 
-			ux = 0.0;
-			uy = 0.0;
-			uz = 0.0;
+			ux = F(0.0);
+			uy = F(0.0);
+			uz = F(0.0);
 
 			kd->GetNode(kd, x, y, z, pdfs);
 
 
-			density = 0.0;
+			density = F(0.0);
 
 			#define X(name, idx, idxinv, _x, _y, _z)	density += pdfs[idx];
 				D3Q19_LIST
@@ -391,39 +394,39 @@ void KernelSetInitialVelocity(LatticeDesc * ld, KernelData * kd, CaseData * cd)
 
 
 			#define SQR(a) ((a)*(a))
-			dir_indep_trm = one_third * dens - 0.5 * (ux * ux + uy * uy + uz * uz);
+			dir_indep_trm = one_third * dens - F(0.5) * (ux * ux + uy * uy + uz * uz);
 
 			pdfs[D3Q19_C]  = omega_w0 * (dir_indep_trm);
 
-			pdfs[D3Q19_NW] = omega_w2 * (dir_indep_trm - (ux - uy) + 1.5 * SQR(ux - uy));
-			pdfs[D3Q19_SE] = omega_w2 * (dir_indep_trm + (ux - uy) + 1.5 * SQR(ux - uy));
+			pdfs[D3Q19_NW] = omega_w2 * (dir_indep_trm - (ux - uy) + F(1.5) * SQR(ux - uy));
+			pdfs[D3Q19_SE] = omega_w2 * (dir_indep_trm + (ux - uy) + F(1.5) * SQR(ux - uy));
 
-			pdfs[D3Q19_NE] = omega_w2 * (dir_indep_trm + (ux + uy) + 1.5 * SQR(ux + uy));
-			pdfs[D3Q19_SW] = omega_w2 * (dir_indep_trm - (ux + uy) + 1.5 * SQR(ux + uy));
-
-
-			pdfs[D3Q19_TW] = omega_w2 * (dir_indep_trm - (ux - uz) + 1.5 * SQR(ux - uz));
-			pdfs[D3Q19_BE] = omega_w2 * (dir_indep_trm + (ux - uz) + 1.5 * SQR(ux - uz));
-
-			pdfs[D3Q19_TE] = omega_w2 * (dir_indep_trm + (ux + uz) + 1.5 * SQR(ux + uz));
-			pdfs[D3Q19_BW] = omega_w2 * (dir_indep_trm - (ux + uz) + 1.5 * SQR(ux + uz));
+			pdfs[D3Q19_NE] = omega_w2 * (dir_indep_trm + (ux + uy) + F(1.5) * SQR(ux + uy));
+			pdfs[D3Q19_SW] = omega_w2 * (dir_indep_trm - (ux + uy) + F(1.5) * SQR(ux + uy));
 
 
-			pdfs[D3Q19_TS] = omega_w2 * (dir_indep_trm - (uy - uz) + 1.5 * SQR(uy - uz));
-			pdfs[D3Q19_BN] = omega_w2 * (dir_indep_trm + (uy - uz) + 1.5 * SQR(uy - uz));
+			pdfs[D3Q19_TW] = omega_w2 * (dir_indep_trm - (ux - uz) + F(1.5) * SQR(ux - uz));
+			pdfs[D3Q19_BE] = omega_w2 * (dir_indep_trm + (ux - uz) + F(1.5) * SQR(ux - uz));
 
-			pdfs[D3Q19_TN] = omega_w2 * (dir_indep_trm + (uy + uz) + 1.5 * SQR(uy + uz));
-			pdfs[D3Q19_BS] = omega_w2 * (dir_indep_trm - (uy + uz) + 1.5 * SQR(uy + uz));
+			pdfs[D3Q19_TE] = omega_w2 * (dir_indep_trm + (ux + uz) + F(1.5) * SQR(ux + uz));
+			pdfs[D3Q19_BW] = omega_w2 * (dir_indep_trm - (ux + uz) + F(1.5) * SQR(ux + uz));
 
 
-			pdfs[D3Q19_N]  = omega_w1 * (dir_indep_trm + uy + 1.5 * SQR(uy));
-			pdfs[D3Q19_S]  = omega_w1 * (dir_indep_trm - uy + 1.5 * SQR(uy));
+			pdfs[D3Q19_TS] = omega_w2 * (dir_indep_trm - (uy - uz) + F(1.5) * SQR(uy - uz));
+			pdfs[D3Q19_BN] = omega_w2 * (dir_indep_trm + (uy - uz) + F(1.5) * SQR(uy - uz));
 
-			pdfs[D3Q19_E]  = omega_w1 * (dir_indep_trm + ux + 1.5 * SQR(ux));
-			pdfs[D3Q19_W]  = omega_w1 * (dir_indep_trm - ux + 1.5 * SQR(ux));
+			pdfs[D3Q19_TN] = omega_w2 * (dir_indep_trm + (uy + uz) + F(1.5) * SQR(uy + uz));
+			pdfs[D3Q19_BS] = omega_w2 * (dir_indep_trm - (uy + uz) + F(1.5) * SQR(uy + uz));
 
-			pdfs[D3Q19_T]  = omega_w1 * (dir_indep_trm + uz + 1.5 * SQR(uz));
-			pdfs[D3Q19_B]  = omega_w1 * (dir_indep_trm - uz + 1.5 * SQR(uz));
+
+			pdfs[D3Q19_N]  = omega_w1 * (dir_indep_trm + uy + F(1.5) * SQR(uy));
+			pdfs[D3Q19_S]  = omega_w1 * (dir_indep_trm - uy + F(1.5) * SQR(uy));
+
+			pdfs[D3Q19_E]  = omega_w1 * (dir_indep_trm + ux + F(1.5) * SQR(ux));
+			pdfs[D3Q19_W]  = omega_w1 * (dir_indep_trm - ux + F(1.5) * SQR(ux));
+
+			pdfs[D3Q19_T]  = omega_w1 * (dir_indep_trm + uz + F(1.5) * SQR(uz));
+			pdfs[D3Q19_B]  = omega_w1 * (dir_indep_trm - uz + F(1.5) * SQR(uz));
 
 			#undef SQR
 
@@ -447,7 +450,7 @@ void KernelSetInitialVelocity(LatticeDesc * ld, KernelData * kd, CaseData * cd)
 //
 static PdfT CalcXVelForPipeProfile(PdfT maxRadiusSquared, PdfT curRadiusSquared, PdfT xForce, PdfT viscosity)
 {
-	return xForce*(maxRadiusSquared - curRadiusSquared) / (2.0*viscosity);
+	return xForce * (maxRadiusSquared - curRadiusSquared) / (F(2.0) * viscosity);
 }
 
 static void KernelGetXSlice(LatticeDesc * ld, KernelData * kd, CaseData * cd, PdfT * outputArray, int xPos)
@@ -462,7 +465,7 @@ static void KernelGetXSlice(LatticeDesc * ld, KernelData * kd, CaseData * cd, Pd
 	Assert(xPos < ld->Dims[0]);
 
 
-	PdfT ux = 0.0;
+	PdfT ux = F(0.0);
 
 	// Declare pdf_N, pdf_E, pdf_S, pdf_W, ...
 	#define X(name, idx, idxinv, x, y, z)	PdfT JOIN(pdf_,name);
@@ -486,13 +489,13 @@ static void KernelGetXSlice(LatticeDesc * ld, KernelData * kd, CaseData * cd, Pd
 					 pdf_W - pdf_NW - pdf_SW - pdf_TW - pdf_BW;
 
 				#ifdef VERIFICATION
-				ux += 0.5 * cd->XForce;
+				ux += F(0.5) * cd->XForce;
 				#endif
 
 				outputArray[y * nZ + z] = ux;
 			}
 			else {
-				outputArray[y * nZ + z] = 0.0;
+				outputArray[y * nZ + z] = F(0.0);
 			}
 		}
 	}
@@ -517,7 +520,7 @@ void KernelVerifiy(LatticeDesc * ld, KernelData * kd, CaseData * cd, PdfT * erro
 	int nZ = ld->Dims[2];
 
 	PdfT omega   = cd->Omega;
-	PdfT viscosity        = (1.0 / omega - 0.5) / 3.0;
+	PdfT viscosity        = (F(1.0) / omega - F(0.5)) / F(3.0);
 
 	// ux averaged across cross sections in x direction
 	PdfT * outputArray = (PdfT *)malloc(nZ * nY * sizeof(PdfT));
@@ -532,15 +535,15 @@ void KernelVerifiy(LatticeDesc * ld, KernelData * kd, CaseData * cd, PdfT * erro
 
 	FILE * fh;
 	char fileName[1024];
-	PdfT tmpAvgUx = 0.0;
-	PdfT tmpAnalyUx = 0.0;
+	PdfT tmpAvgUx   = F(0.0);
+	PdfT tmpAnalyUx = F(0.0);
 	int flagEvenNy = 0;
 	int y = 0;
 
 	if (nY % 2 == 0)
 		flagEvenNy = 1;
 
-	y = (nY-flagEvenNy-1)/2;
+	y = (nY - flagEvenNy - 1) / 2;
 
 	snprintf(fileName, sizeof(fileName), "flow-profile.dat");
 
@@ -559,37 +562,37 @@ void KernelVerifiy(LatticeDesc * ld, KernelData * kd, CaseData * cd, PdfT * erro
 	fprintf(fh, "# Plot graphically: gnuplot -e \"plot \\\"%s\\\" u 1:3 w linesp t \\\"analytical\\\", \\\"\\\" u 1:4 w linesp t \\\"simulation\\\"; pause -1;\"\n", fileName);
 	fprintf(fh, "# z coord., radius, analytic, simulation, diff abs, diff rel, undim_analytic, undim_sim\n");
 
-	double deviation = 0.0;
-	double curRadiusSquared;
-	double center = nY / 2.0;
-	double minDiameter = nY;
+	PdfT deviation = F(0.0);
+	PdfT curRadiusSquared;
+	PdfT center = nY / F(2.0);
+	PdfT minDiameter = (PdfT)nY;
 	#define SQR(a) ((a)*(a))
-	double minRadiusSquared = SQR(minDiameter / 2.0 - 1.0);
+	PdfT minRadiusSquared = SQR(minDiameter / F(2.0) - F(1.0));
 	#undef SQR
-	double u_max = cd->XForce*minRadiusSquared/(2.0*viscosity);
+	PdfT u_max = cd->XForce*minRadiusSquared / (F(2.0) * viscosity);
 
 	for(int z = 0; z < nZ; ++z) {
 
 		fprintf(fh, "%d\t", z);
 
 		#define SQR(a) ((a)*(a))
-		curRadiusSquared = SQR(z-center+0.5);
+		curRadiusSquared = SQR(z - center + F(0.5));
 
 
 		// dimensionless radius
-		fprintf(fh, "%e\t", (z-center+0.5)/center);
+		fprintf(fh, "%e\t", (z - center + F(0.5)) / center);
 
 		// analytic profile
 		if(curRadiusSquared >= minRadiusSquared)
-			tmpAnalyUx = 0.0;
+			tmpAnalyUx = F(0.0);
 		else
 			tmpAnalyUx = CalcXVelForPipeProfile(minRadiusSquared, curRadiusSquared, cd->XForce, viscosity);
 
 		//averaged profile
 		if(flagEvenNy == 1)
-			tmpAvgUx = (outputArray[y*nZ + z] + outputArray[(y+1)*nZ + z])/2.0;
+			tmpAvgUx = (outputArray[y * nZ + z] + outputArray[(y + 1) * nZ + z]) / F(2.0);
 		else
-			tmpAvgUx = outputArray[y*nZ + z];
+			tmpAvgUx =  outputArray[y * nZ + z];
 
 		fprintf(fh, "%e\t", tmpAnalyUx);
 		fprintf(fh, "%e\t", tmpAvgUx);
@@ -597,7 +600,7 @@ void KernelVerifiy(LatticeDesc * ld, KernelData * kd, CaseData * cd, PdfT * erro
 		fprintf(fh, "%e\t", fabs(tmpAnalyUx-tmpAvgUx));
 		if (tmpAnalyUx != 0.0) {
 			fprintf(fh, "%e\t", fabs(tmpAnalyUx - tmpAvgUx) / tmpAnalyUx);
-			deviation += SQR(fabs(tmpAnalyUx - tmpAvgUx) / tmpAnalyUx);
+			deviation += SQR((PdfT)fabs(tmpAnalyUx - tmpAvgUx) / tmpAnalyUx);
 		}
 		else {
 			fprintf(fh, "0.0\t");
@@ -610,7 +613,7 @@ void KernelVerifiy(LatticeDesc * ld, KernelData * kd, CaseData * cd, PdfT * erro
 		#undef SQR
 	}
 
-	*errorNorm = sqrt(deviation);
+	*errorNorm = (PdfT)sqrt(deviation);
 
 	printf("# Kernel validation: L2 error norm of relative error: %e\n", *errorNorm);
 
@@ -709,13 +712,12 @@ void KernelStatisticsAdv(KernelData * kd, LatticeDesc * ld, CaseData * cd, int i
 
 	fprintf(fh, "# Average density and average x velocity over each cross section in x direction. Snapshot taken at iteration %d.\n", iteration);
 	fprintf(fh, "# Plot on terminal: gnuplot -e \"set terminal dumb; plot \\\"%s\\\" u 1:2; plot \\\"%s\\\" u 1:3;\"\n", fileName, fileName);
-//	fprintf(fh, "# Plot graphically: gnuplot -e \"plot \\\"%s\\\" u 1:3 w linesp t \\\"l\\\", \\\"\\\" u 1:4 w linesp t \\\"simulation\\\"; pause -1;"
 	fprintf(fh, "# x, avg density, avg ux\n");
 
 	for (x = 0; x < nX; ++x) {
 
-		uxSum = 0.0;
-		densitySum = 0.0;
+		uxSum = F(0.0);
+		densitySum = F(0.0);
 		nFluidNodes = 0;
 
 		for (int y = 0; y < nY; ++y) {
@@ -764,9 +766,9 @@ void KernelAddBodyForce(KernelData * kd, LatticeDesc * ld, CaseData * cd)
 	int nY = kd->Dims[1];
 	int nZ = kd->Dims[2];
 
-	PdfT w_0 = 1.0 /  3.0; // C
-	PdfT w_1 = 1.0 / 18.0; // N,S,E,W,T,B
-	PdfT w_2 = 1.0 / 36.0; // NE,NW,SE,SW,TE,TW,BE,BW,TN,TS,BN,BS
+	PdfT w_0 = F(1.0) / F( 3.0); // C
+	PdfT w_1 = F(1.0) / F(18.0); // N,S,E,W,T,B
+	PdfT w_2 = F(1.0) / F(36.0); // NE,NW,SE,SW,TE,TW,BE,BW,TN,TS,BN,BS
 	PdfT w[] = {w_1,w_1,w_1,w_1,w_2,w_2,w_2,w_2,w_1,w_2,w_2,w_2,w_2,w_1,w_2,w_2,w_2,w_2,w_0};
 
 	PdfT xForce = cd->XForce;
@@ -788,9 +790,9 @@ void KernelAddBodyForce(KernelData * kd, LatticeDesc * ld, CaseData * cd)
 				// load pdfs into temp array
 				kd->GetNode(kd, x, y, z, pdfs);
 
-				// add body force in x direction ( method by Luo)
+				// add body force in x direction (method by Luo)
 				for (int d = 0; d < N_D3Q19; ++d) {
-					pdfs[d] = pdfs[d] + 3.0*w[d]*D3Q19_X[d]*xForce;
+					pdfs[d] = pdfs[d] + F(3.0) * w[d] * D3Q19_X[d] * xForce;
 				}
 
 				kd->SetNode(kd, x, y, z, pdfs);

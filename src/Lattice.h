@@ -51,6 +51,7 @@ typedef struct LatticeDesc_ {
 	int PeriodicX;		// Periodic in X direction.
 	int PeriodicY;		// Periodic in Y direction.
 	int PeriodicZ;		// Periodic in Z direction.
+	const char * Name;	// Geometry Name, points to statically allocated names, do not free!
 } LatticeDesc;
 
 
