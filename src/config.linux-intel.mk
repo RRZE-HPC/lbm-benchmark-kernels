@@ -8,6 +8,10 @@
 #   Viktor Haag, 2016
 #   LSS, University of Erlangen-Nuremberg, Germany
 #
+#   Michael Hussnaetter, 2017-2018
+#   University of Erlangen-Nuremberg, Germany
+#   michael.hussnaetter -at- fau.de
+#
 #  This file is part of the Lattice Boltzmann Benchmark Kernels (LbmBenchKernels).
 #
 #  LbmBenchKernels is free software: you can redistribute it and/or modify

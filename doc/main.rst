@@ -7,6 +7,10 @@
 |   Viktor Haag, 2016
 |   LSS, University of Erlangen-Nuremberg, Germany
 |
+|   Michael Hussnaetter, 2017-2018
+|   University of Erlangen-Nuremberg, Germany
+|   michael.hussnaetter -at- fau.de
+|
 | This file is part of the Lattice Boltzmann Benchmark Kernels (LbmBenchKernels).
 |
 | LbmBenchKernels is free software: you can redistribute it and/or modify
@@ -155,14 +159,27 @@ name          values                  default      description
 BENCHMARK     on, off                 on           If enabled, disables VERIFICATION, STATISTICS, VTK_OUTPUT. If disabled enables the three former options.
 BUILD         debug, release          release      debug: no optimization, debug symbols, DEBUG defined. release: optimizations enabled.
 CONFIG        linux-gcc, linux-intel  linux-intel  Select GCC or Intel compiler. 
-ISA           avx, sse                avx          Determines which ISA extension is used for macro definitions of the intrinsics. This is *not* the architecture the compiler generates code for.
-OPENMP        on, off                 on           OpenMP, i.\,e.\. threading support.
+ISA           avx512, avx, sse        avx          Determines which ISA extension is used for macro definitions of the intrinsics. This is *not* the architecture the compiler generates code for.
+OPENMP        on, off                 on           OpenMP, i.e. threading support.
 PRECISION     dp, sp                  dp           Floating point precision used for data type, arithmetic, and intrincics.
 STATISTICS    on, off                 off          View statistics, like density etc, during simulation. 
 TARCH         --                      --           Via TARCH the architecture the compiler generates code for can be overridden. The value depends on the chosen compiler.
 VERIFICATION  on, off                 off          Turn verification on/off.
 VTK_OUTPUT    on, off                 off          Enable/Disable VTK file output.
 ============= ======================= ============ ==========================================================
+
+**Suboptions for ``ISA=avx512``**
+
+============================== ======== ======== ======================
+name                           values   default  description
+============================== ======== ======== ======================
+ADJ_LIST_MEM_TYPE              HBM      -        Determines memory location of adjacency list array, DRAM or HBM.
+PDF_MEM_TYPE                   HBM      -        Determines memory location of PDF array, DRAM or HBM.
+SOFTWARE_PREFETCH_LOOKAHEAD_L1 int >= 0 0        Software prefetch lookahead of elements into L1 cache, value is multiplied by vector size (``VSIZE``).
+SOFTWARE_PREFETCH_LOOKAHEAD_L2 int >= 0 0        Software prefetch lookahead of elements into L2 cache, value is multiplied by vector size (``VSIZE``).
+============================== ======== ======== ======================
+
+Please note this options require AVX-512 PF support of the target processor.
 
 Invocation
 ==========
@@ -185,7 +202,7 @@ Running the binary with ``-h`` list all available parameters: ::
   Usage:
   ./lbmbenchk -list
   ./lbmbenchk
-      [-dims XxYyZ] [-geometry box|channel|pipe|blocks[-<block size>]] [-iterations <iterations>] [-lattice-dump-ascii]
+      [-dims XxYxZ] [-geometry box|channel|pipe|blocks[-<block size>]] [-iterations <iterations>] [-lattice-dump-ascii]
       [-rho-in <density>] [-rho-out <density] [-omega <omega>] [-kernel <kernel>]
       [-periodic-x]
       [-t <number of threads>]
@@ -341,7 +358,7 @@ created make sure the binary was compiled with:
 
 - ``BENCHMARK=on`` (default if not overriden) and
 - ``BUILD=release`` (default if not overriden) and 
-- the correct ISA for macros is used, selected via ``ISA`` and
+- the correct ISA for macros (i.e. intrinsics) is used, selected via ``ISA`` and
 - use ``TARCH`` to specify the architecture the compiler generates code for.
   
 Intel Compiler
@@ -349,6 +366,7 @@ Intel Compiler
 
 For the Intel compiler one can specify depending on the target ISA extension:
 
+- SSE:          ``TARCH=-xSSE4.2``
 - AVX:          ``TARCH=-xAVX``
 - AVX2 and FMA: ``TARCH=-xCORE-AVX2,-fma``
 - AVX512:       ``TARCH=-xCORE-AVX512``
@@ -367,12 +385,30 @@ WARNING: ISA is here still set to ``avx`` as currently we have the FMA intrinsic
 implemented. This might change in the future.
 
 
+.. TODO: add isa=avx512 and add docu for knl
+
+.. TODO: kein prefetching wenn AVX-512 PF nicht unterstuetz wird
+ 
 Compiling for an architecture supporting AVX-512 (Skylake): ::
 
-  make ISA=avx TARCH=-xCORE-AVX512
+  make ISA=avx512 TARCH=-xCORE-AVX512
 
-WARNING: ISA is here still set to ``avx`` as currently we have no implementation for the
-AVX512 intrinsics. This might change in the future.
+Please note that for the AVX512 gather kernels software prefetching for the
+gather instructions is disabled per default.
+To enable it set ``SOFTWARE_PREFETCH_LOOKAHEAD_L1`` and/or
+``SOFTWARE_PREFETCH_LOOKAHEAD_L2`` to a value greater than ``0`` during
+compilation. Note that this requires AVX-512 PF support from the target
+processor.
+
+Compiling for MIC architecture KNL supporting AVX-512 and AVX-512 PF::
+
+  make ISA=avx512 TARCH=-xMIC-AVX512
+
+or optionally with software prefetch enabled::
+
+  make ISA=avx512 TARCH=-xMIC-AVX512 SOFTWARE_PREFETCH_LOOKAHEAD_L1=<value> SOFTWARE_PREFETCH_LOOKAHEAD_L2=<value>
+
+
 
 
 Pinning

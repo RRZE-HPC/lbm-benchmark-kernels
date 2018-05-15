@@ -119,8 +119,10 @@ void FNAME(KernelPullSplitNt1S)(LatticeDesc * ld, KernelData * kernelData, CaseD
 		KernelStatistics(kd, ld, cd, 0);
 	#endif
 
+	X_KERNEL_START(kernelData);
 
-			X_LIKWID_START("list-pull-split-nt-1s");
+	X_LIKWID_START("list-pull-split-nt-1s");
+
 	#ifdef _OPENMP
 		#pragma omp parallel default(none) \
 			shared(nFluid, nCells, kd, kdl, adjList, src, dst, \
@@ -244,6 +246,8 @@ void FNAME(KernelPullSplitNt1S)(LatticeDesc * ld, KernelData * kernelData, CaseD
 
 	X_LIKWID_STOP("list-pull-split-nt-1s");
 
+	X_KERNEL_END(kernelData);
+
 #ifdef VTK_OUTPUT
 	if (cd->VtkOutput) {
 		kd->PdfsActive = src;
@@ -330,7 +334,9 @@ void FNAME(KernelPullSplitNt2S)(LatticeDesc * ld, KernelData * kernelData, CaseD
 	#endif
 
 
-			X_LIKWID_START("list-pull-split-nt-2s");
+	X_KERNEL_START(kernelData);
+
+	X_LIKWID_START("list-pull-split-nt-2s");
 
 
 	#ifdef _OPENMP
@@ -451,7 +457,9 @@ void FNAME(KernelPullSplitNt2S)(LatticeDesc * ld, KernelData * kernelData, CaseD
 		MemFree((void **)&tmpArray);
 	}
 
-			X_LIKWID_STOP("list-pull-split-nt-2s");
+	X_LIKWID_STOP("list-pull-split-nt-2s");
+
+	X_KERNEL_END(kernelData);
 
 #ifdef VTK_OUTPUT
 	if (cd->VtkOutput) {

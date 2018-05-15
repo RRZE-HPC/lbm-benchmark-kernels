@@ -93,16 +93,15 @@ void FNAME(D3Q19ListKernel)(LatticeDesc * ld, KernelData * kernelData, CaseData 
 		KernelStatistics(kd, ld, cd, 0);
 	#endif
 
-	// TODO: outer openmp parallel
-	for(int iter = 0; iter < maxIterations; ++iter) {
-
+	X_KERNEL_START(kernelData);
 
 	X_LIKWID_START("list-os");
 
+	// TODO: outer openmp parallel
 	#ifdef _OPENMP
-		#pragma omp parallel for default(none) \
+		#pragma omp parallel default(none) \
 				shared(nFluid, nCells, kd, kdl, adjList, src, dst, w_0, w_1, w_2, omegaEven, omegaOdd, \
-				w_1_x3, w_2_x3, w_1_nine_half, w_2_nine_half, cd) \
+				w_1_x3, w_2_x3, w_1_nine_half, w_2_nine_half, cd, ld, tmp, maxIterations ) \
 				private(ux, uy, uz, ui, dens, dir_indep_trm, adjListIndex, \
 					pdf_C, \
 				  	pdf_N, pdf_E, pdf_S, pdf_W, \
@@ -111,10 +110,16 @@ void FNAME(D3Q19ListKernel)(LatticeDesc * ld, KernelData * kernelData, CaseData 
 				  	pdf_B, pdf_BN, pdf_BE, pdf_BS, pdf_BW, \
 				  	evenPart, oddPart, w_1_indep, w_2_indep)
 	#endif
+{
+	for(int iter = 0; iter < maxIterations; ++iter) {
+
+
+
 	#ifdef INTEL_OPT_DIRECTIVES
-		#pragma ivdep
 	#endif
-	for (int index = 0; index < nFluid; ++index) {
+	#pragma omp for
+	#pragma novector
+	for (int index = 0; index < nFluid; ++index) { // LOOP list-os
 
 			#define I(index, dir)	P_INDEX_3((nCells), (index), (dir))
 
@@ -311,31 +316,36 @@ void FNAME(D3Q19ListKernel)(LatticeDesc * ld, KernelData * kernelData, CaseData 
 			#undef I
 		} // loop over fluid nodes
 
-		X_LIKWID_STOP("list-os");
-
-		#ifdef VERIFICATION
-			kd->PdfsActive = dst;
-			KernelAddBodyForce(kd, ld, cd);
-		#endif
-
-		#ifdef VTK_OUTPUT
-			if (cd->VtkOutput && (iter % cd->VtkModulus) == 0) {
+		#pragma omp single
+		{
+			#ifdef VERIFICATION
 				kd->PdfsActive = dst;
-				VtkWrite(ld, kd, cd, iter);
-			}
-		#endif
+				KernelAddBodyForce(kd, ld, cd);
+			#endif
 
-		#ifdef STATISTICS
-			kd->PdfsActive = dst;
-			KernelStatistics(kd, ld, cd, iter);
-		#endif
+			#ifdef VTK_OUTPUT
+				if (cd->VtkOutput && (iter % cd->VtkModulus) == 0) {
+					kd->PdfsActive = dst;
+					VtkWrite(ld, kd, cd, iter);
+				}
+			#endif
 
-		// swap grids
-		tmp = src;
-		src = dst;
-		dst = tmp;
+			#ifdef STATISTICS
+				kd->PdfsActive = dst;
+				KernelStatistics(kd, ld, cd, iter);
+			#endif
 
+			// swap grids
+			tmp = src;
+			src = dst;
+			dst = tmp;
+		}
+	}
 	} // for (int iter = 0; ...
+
+	X_LIKWID_STOP("list-os");
+
+	X_KERNEL_END(kernelData);
 
 #ifdef VTK_OUTPUT
 	if (cd->VtkOutput) {

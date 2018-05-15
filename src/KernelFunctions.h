@@ -8,6 +8,10 @@
 //   Viktor Haag, 2016
 //   LSS, University of Erlangen-Nuremberg, Germany
 //
+//   Michael Hussnaetter, 2017-2018
+//   University of Erlangen-Nuremberg, Germany
+//   michael.hussnaetter -at- fau.de
+//
 //  This file is part of the Lattice Boltzmann Benchmark Kernels (LbmBenchKernels).
 //
 //  LbmBenchKernels is free software: you can redistribute it and/or modify
@@ -35,6 +39,11 @@
 #include "BenchKernelD3Q19ListAa.h"
 #include "BenchKernelD3Q19ListAaRia.h"
 #include "BenchKernelD3Q19ListAaPv.h"
+#ifdef VECTOR_AVX512
+#include "BenchKernelD3Q19ListAaPvGatherAoSoA.h"
+#include "BenchKernelD3Q19ListAaPvGather.h"
+#include "BenchKernelD3Q19ListAaPvGatherHybrid.h"
+#endif
 #include "BenchKernelD3Q19ListPullSplitNt.h"
 
 typedef struct KernelFunctions_
@@ -66,6 +75,24 @@ KernelFunctions g_kernels[] =
 		.Init   = D3Q19ListAaInit_PushAoS,
 		.Deinit = D3Q19ListAaDeinit_PushAoS
 	},
+#ifdef VECTOR_AVX512
+	{
+		.Name   = "list-aa-pv-gather-aosoa",
+		.Init   = D3Q19ListAaPvGatherAoSoAInit_PushAoSoA,
+		.Deinit = D3Q19ListAaPvGatherAoSoADeinit_PushAoSoA
+	},
+	{
+		.Name   = "list-aa-pv-gather-soa",
+		.Init   = D3Q19ListAaPvGatherInit_PushSoA,
+		.Deinit = D3Q19ListAaPvGatherDeinit_PushSoA
+	},
+
+	{
+		.Name   = "list-aa-pv-gather-hybrid-soa",
+		.Init   = D3Q19ListAaPvGatherHybridInit_PushSoA,
+		.Deinit = D3Q19ListAaPvGatherHybridDeinit_PushSoA
+	},
+#endif
 	{
 		.Name   = "list-pull-split-nt-1s-soa",
 		.Init   = D3Q19ListPullSplitNt1SInit_PullSoA,

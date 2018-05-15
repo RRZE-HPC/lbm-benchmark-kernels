@@ -1,12 +1,16 @@
 // --------------------------------------------------------------------------
 //
 // Copyright
-//   Markus Wittmann, 2016-2017
+//   Markus Wittmann, 2016-2018
 //   RRZE, University of Erlangen-Nuremberg, Germany
 //   markus.wittmann -at- fau.de or hpc -at- rrze.fau.de
 //
 //   Viktor Haag, 2016
 //   LSS, University of Erlangen-Nuremberg, Germany
+//
+//   Michael Hussnaetter, 2017-2018
+//   University of Erlangen-Nuremberg, Germany
+//   michael.hussnaetter -at- fau.de
 //
 //  This file is part of the Lattice Boltzmann Benchmark Kernels (LbmBenchKernels).
 //
@@ -27,13 +31,15 @@
 #ifndef __VECTOR_H__
 #define __VECTOR_H__
 
-#if !defined(VECTOR_AVX) && !defined(VECTOR_SSE)
+#if !defined(VECTOR_AVX512) && !defined(VECTOR_AVX) && !defined(VECTOR_SSE)
 	#warning Defining VECTOR_AVX as no ISA extension was selected.
 	#define VECTOR_AVX
 #endif
 
-#if defined(VECTOR_AVX) && defined(VECTOR_SSE)
-	#error Only VECTOR_AVX or VECTOR_SSE can be defined at the same time.
+#if (defined(VECTOR_AVX512) && defined(VECTOR_AVX)) || \
+	(defined(VECTOR_AVX512) && defined(VECTOR_SEE)) || \
+	(defined(VECTOR_AVX) && defined(VECTOR_SSE))
+	#error Only VECTOR_AVX512 or VECTOR_AVX or VECTOR_SSE can be defined at the same time.
 #endif
 
 #if !defined(PRECISION_DP) && !defined(PRECISION_SP)
@@ -45,6 +51,43 @@
 #endif
 
 #ifdef PRECISION_DP
+
+	#ifdef VECTOR_AVX512
+
+		#include <immintrin.h>
+		// Vector size in double-precision floatin-point numbers.
+		#define VSIZE	8
+
+		#define VPDFT				__m512d
+
+		#define VSET(scalar)		_mm512_set1_pd(scalar)
+		#define VSETI32(scalar)     _mm256_set1_epi32(scalar)
+
+		#define VLD(expr)			_mm512_load_pd(expr)
+		#define VLDU(expr)			_mm512_loadu_pd(expr)
+		#define VLIU(expr)			_mm256_loadu_si256((__m256i const *)expr)
+		#define VLI64(expr)			_mm512_load_epi64(expr)
+
+		#define VST(dst, src)		_mm512_store_pd(dst, src)
+		#define VSTU(dst, src)		_mm512_storeu_pd(dst, src)
+		#define VSTNT(dst, src)		_mm512_stream_pd(dst, src)
+
+		#define VG32(offsets, base, scale)	_mm512_i32gather_pd(offsets, base, scale)
+		#define VG64(offsets, base, scale)	_mm512_i64gather_pd(offsets, base, scale)
+
+		#define VPG32(offsets, base, scale, hint) _mm512_prefetch_i32gather_pd(offsets, base, scale, hint)
+
+		#define VS32(dst_base, dst_offsets, src, scale)	_mm512_i32scatter_pd(dst_base, dst_offsets, src, scale)
+		#define VS64(dst_base, dst_offsets, src, scale)	_mm512_i64scatter_pd(dst_base, dst_offsets, src, scale)
+
+		#define VPS32(dst_base, dst_offsets, scale, hint) _mm512_prefetch_i32scatter_pd(dst_base, dst_offsets, scale, hint)
+
+		#define VMUL(a, b)			_mm512_mul_pd(a, b)
+		#define VADD(a, b)			_mm512_add_pd(a, b)
+		#define VADDI32(a,b)		_mm256_add_epi32(a,b)
+		#define VMULI32(a,b)		_mm256_mul_epi32(a,b)
+		#define VSUB(a, b)			_mm512_sub_pd(a, b)
+	#endif
 
 	#ifdef VECTOR_AVX
 
@@ -90,6 +133,10 @@
 	#endif
 
 #elif defined(PRECISION_SP)
+
+	#ifdef VECTOR_AVX512
+		#error Single precision intrinsic kernels for AVX512 are currently not implemented.
+	#endif
 
 	#ifdef VECTOR_AVX
 

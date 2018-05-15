@@ -55,15 +55,16 @@ function run_kernel
   local K="$2"      # Kernel name
   local T="$3"      # Number of threads
   local KernelArgs="${4:-""}"
+  local BinaryArgs="${5:-""}"
 
   ((++TestsTotal))
 
-  echo -n "$Binary -verify -kernel $K -t $T -pin $(seq -s , 0 $((T-1))) ${KernelArgs:+"-- "}$KernelArgs "
+  echo -n "$Binary -verify -kernel $K -t $T -pin $(seq -s , 0 $((T-1))) $BinaryArgs ${KernelArgs:+"-- "}$KernelArgs "
 
   if [ "$KernelArgs" == "" ]; then
-    $Binary -verify -kernel $K -t $T -pin $(seq -s , 0 $((T-1))) > "$Tmp" 2>&1
+    $Binary -verify -kernel $K -t $T -pin $(seq -s , 0 $((T-1))) $BinaryArgs > "$Tmp" 2>&1
   else
-    $Binary -verify -kernel $K -t $T -pin $(seq -s , 0 $((T-1))) -- $KernelArgs > "$Tmp" 2>&1
+    $Binary -verify -kernel $K -t $T -pin $(seq -s , 0 $((T-1))) $BinaryArgs -- $KernelArgs > "$Tmp" 2>&1
   fi
 
   local ExitCode="$?"
@@ -86,6 +87,7 @@ for K in $("$Binary" -list | tail -n +7); do
   for T in $(seq 1 $NThreads); do
 
     run_kernel "$Binary" "$K" "$T"
+    # run_kernel "$Binary" "$K" "$T" "" "-dims 17x17x17"
 
     # Check in the usage string, if the kernel accepts parameters for blocking.
 

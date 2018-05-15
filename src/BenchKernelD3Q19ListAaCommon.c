@@ -384,6 +384,8 @@ void FNAME(D3Q19ListAaInit)(LatticeDesc * ld, KernelData ** kernelData, Paramete
 	}
 #endif
 
+	// TODO: check nCells/nFluid do not exceed 2^31. This actually has to be
+	// done during lattice setup.
 	kdl->nCells = nCells;
 	kdl->nFluid = nFluid;
 

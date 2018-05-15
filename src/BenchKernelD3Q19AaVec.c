@@ -123,6 +123,8 @@ void FNAME(D3Q19AaVecKernel)(LatticeDesc * ld, KernelData * kd, CaseData * cd)
 
 	Assert((maxIterations % 2) == 0);
 
+	X_KERNEL_START(kd);
+
 	for (int iter = 0; iter < maxIterations; iter += 2) {
 
 		// --------------------------------------------------------------------
@@ -214,6 +216,8 @@ void FNAME(D3Q19AaVecKernel)(LatticeDesc * ld, KernelData * kd, CaseData * cd)
 
 
 	} // for (int iter = 0; ...
+
+	X_KERNEL_END(kd);
 
 	#ifdef VTK_OUTPUT
 
@@ -331,7 +335,7 @@ static void KernelEven(LatticeDesc * ld, KernelData * kd, CaseData * cd) // {{{
 
 		for (int x = bX; x < eX; x += 1) {
 		for (int y = bY; y < eY; y += 1) {
-		for (int z = bZ; z < eZ; z += VSIZE) {
+		for (int z = bZ; z < eZ; z += VSIZE) { // LOOP aa-vec-even
 
 			#define I(x, y, z, dir)	P_INDEX_5(gDims, (x), (y), (z), (dir))
 
@@ -523,7 +527,7 @@ static void KernelOdd(LatticeDesc * ld, KernelData * kd, CaseData * cd)  // {{{
 
 		for (int x = bX; x < eX; ++x) {
 		for (int y = bY; y < eY; ++y) {
-		for (int z = bZ; z < eZ; z += VSIZE) {
+		for (int z = bZ; z < eZ; z += VSIZE) { // LOOP aa-vec-odd
 
 			#define I(x, y, z, dir)	P_INDEX_5(gDims, (x), (y), (z), (dir))
 

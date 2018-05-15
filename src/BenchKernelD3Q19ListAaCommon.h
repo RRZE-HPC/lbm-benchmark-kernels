@@ -8,6 +8,10 @@
 //   Viktor Haag, 2016
 //   LSS, University of Erlangen-Nuremberg, Germany
 //
+//   Michael Hussnaetter, 2017-2018
+//   University of Erlangen-Nuremberg, Germany
+//   michael.hussnaetter -at- fau.de
+//
 //  This file is part of the Lattice Boltzmann Benchmark Kernels (LbmBenchKernels).
 //
 //  LbmBenchKernels is free software: you can redistribute it and/or modify
@@ -89,6 +93,10 @@ static inline int FNAME(PINDEX3)(int nCells, int cellIndex, int d)
 	return d * nCells + cellIndex;
 #elif  DATA_LAYOUT_AOS
 	return cellIndex * N_D3Q19 + d;
+#elif DATA_LAYOUT_AOSOA
+	return (cellIndex - (cellIndex % AOSOA_BLOCK_SIZE)) * N_D3Q19
+			+ (d * AOSOA_BLOCK_SIZE)
+			+ (cellIndex % AOSOA_BLOCK_SIZE); 
 #else
 	#error P_INDEX_3 function not implemented for chosen data layout.
 #endif

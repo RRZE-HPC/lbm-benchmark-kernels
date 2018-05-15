@@ -101,6 +101,8 @@ void FNAME(D3Q19Kernel)(LatticeDesc * ld, KernelData * kernelData, CaseData * cd
 	}
 	#endif
 
+	X_KERNEL_START(kernelData);
+
 	for (int iter = 0; iter < maxIterations; ++iter) {
 
 		X_LIKWID_START("os");
@@ -125,7 +127,7 @@ void FNAME(D3Q19Kernel)(LatticeDesc * ld, KernelData * kernelData, CaseData * cd
 					#pragma vector always
 					#pragma simd
 				#endif
-				for (int z = oZ; z < nZ + oZ; ++z) {
+				for (int z = oZ; z < nZ + oZ; ++z) { // LOOP os
 					#define I(x, y, z, dir)	P_INDEX_5(gDims, (x), (y), (z), (dir))
 
 #ifdef PROP_MODEL_PUSH
@@ -320,6 +322,7 @@ void FNAME(D3Q19Kernel)(LatticeDesc * ld, KernelData * kernelData, CaseData * cd
 		// Stop counters before bounce back. Else computing loop balance will be incorrect.
 		X_LIKWID_STOP("os");
 
+
 		// Fixup bounce back PDFs.
 		#ifdef _OPENMP
 		#pragma omp parallel for default(none) \
@@ -354,6 +357,8 @@ void FNAME(D3Q19Kernel)(LatticeDesc * ld, KernelData * kernelData, CaseData * cd
 		dst = tmp;
 
 	} // for (int iter = 0; ...
+
+	X_KERNEL_END(kernelData);
 
 	#ifdef VTK_OUTPUT
 
@@ -444,6 +449,8 @@ void FNAME(D3Q19BlkKernel)(LatticeDesc * ld, KernelData * kernelData, CaseData *
 	#ifdef _OPENMP
 	nThreads = omp_get_max_threads();
 	#endif
+
+	X_KERNEL_START(kernelData);
 
 	for (int iter = 0; iter < maxIterations; ++iter) {
 
@@ -728,6 +735,8 @@ void FNAME(D3Q19BlkKernel)(LatticeDesc * ld, KernelData * kernelData, CaseData *
 		dst = tmp;
 
 	} // for (int iter = 0; ...
+
+	X_KERNEL_END(kernelData);
 
 	#ifdef VTK_OUTPUT
 

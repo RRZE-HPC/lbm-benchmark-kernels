@@ -8,6 +8,10 @@
 //   Viktor Haag, 2016
 //   LSS, University of Erlangen-Nuremberg, Germany
 //
+//   Michael Hussnaetter, 2017-2018
+//   University of Erlangen-Nuremberg, Germany
+//   michael.hussnaetter -at- fau.de
+//
 //  This file is part of the Lattice Boltzmann Benchmark Kernels (LbmBenchKernels).
 //
 //  LbmBenchKernels is free software: you can redistribute it and/or modify
@@ -37,6 +41,10 @@
 #include <string.h>  // strerror
 #include <errno.h>
 
+
+#ifdef HAVE_MEMKIND
+#include <hbwmalloc.h>
+#endif
 
 #ifdef HAVE_HUGE_PAGES
 #include <sys/mman.h> // madvise
@@ -110,3 +118,48 @@ int MemZero(void * ptr, size_t bytesToZero)
 
 	return 0;
 }
+
+#ifdef HAVE_MEMKIND
+int HbwAlloc(void ** ptr, size_t bytesToAlloc)
+{
+	void * tmpPtr;
+
+	tmpPtr = hbw_malloc(bytesToAlloc);
+
+	if (tmpPtr == NULL) { //  && bytesToAlloc != 0) {
+		Error("allocation of %lu bytes in HBM failed: %d - %s\n", bytesToAlloc, errno, strerror(errno));
+		exit(1);
+	}
+
+	*ptr = tmpPtr;
+
+	return 0;
+}
+
+int HbwAllocAligned(void ** ptr, size_t bytesToAlloc, size_t alignmentBytes)
+{
+	int ret;
+
+	ret = hbw_posix_memalign(ptr, alignmentBytes, bytesToAlloc);
+
+	if (ret) {
+		Error("allocation of %lu bytes in HBM aligned to %lu bytes failed: %d - %s\n", bytesToAlloc, alignmentBytes, errno, strerror(errno));
+		exit(1);
+	}
+
+	return 0;
+}
+
+
+int HbwFree(void ** ptr)
+{
+	Assert(*ptr != NULL);
+
+	hbw_free(*ptr);
+
+	*ptr = NULL;
+
+	return 0;
+}
+
+#endif	// HAVE_MEMKIND

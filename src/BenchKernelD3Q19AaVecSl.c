@@ -121,6 +121,8 @@ void FNAME(D3Q19AaVecSlKernel)(LatticeDesc * ld, KernelData * kd, CaseData * cd)
 
 	Assert((maxIterations % 2) == 0);
 
+	X_KERNEL_START(kd);
+
 	#ifdef _OPENMP
 		#pragma omp parallel default(none) shared(kda, kd, ld, cd, src, maxIterations)
 	#endif
@@ -237,6 +239,8 @@ void FNAME(D3Q19AaVecSlKernel)(LatticeDesc * ld, KernelData * kd, CaseData * cd)
 			#endif
 		} // for (int iter = 0; ...
 	} // omp parallel
+
+	X_KERNEL_END(kd);
 
 	#ifdef VTK_OUTPUT
 
@@ -379,7 +383,7 @@ static void KernelEven(LatticeDesc * ld, KernelData * kd, CaseData * cd) // {{{
 	// 		threadId, indexStart, indexEnd, threadStart, threadEnd);
 
 
-	for (int i = threadStart; i < threadEnd; i += VSIZE) {
+	for (int i = threadStart; i < threadEnd; i += VSIZE) { // LOOP aa-vec-sl-even
 
 		// Load PDFs of local cell: pdf_N = src[I(x, y, z, D3Q19_N)]; ...
 		// #define X(name, idx, idxinv, _x, _y, _z)	JOIN(vpdf_,name) = VLDU(&src[I(x, y, z, idx)]);
@@ -605,7 +609,7 @@ startX , startY , startZ , startX + _x, startY + _y, startZ + _z);
 #endif // DEBUG_EXTENDED
 
 
-	for (int i = threadStart; i < threadEnd; i += VSIZE) {
+	for (int i = threadStart; i < threadEnd; i += VSIZE) { // LOOP aa-vec-sl-odd
 
 #if DEBUG_EXTENDED
 		#define X(name, idx, idxinv, _x, _y, _z)	Assert((unsigned long)(JOIN(ppdf_,idx)) >= (unsigned long)(JOIN(ppdf_start_,idx))); Assert((unsigned long)(JOIN(ppdf_,idx)) <= (unsigned long)(JOIN(ppdf_end_,idx)));

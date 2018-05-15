@@ -28,21 +28,17 @@
 //  along with LbmBenchKernels.  If not, see <http://www.gnu.org/licenses/>.
 //
 // --------------------------------------------------------------------------
-#ifndef __MEMORY_H__
-#define __MEMORY_H__
+#ifndef __BENCH_KERNEL_D3Q19_LIST_AA_PV_GATHER__
+#define __BENCH_KERNEL_D3Q19_LIST_AA_PV_GATHER__
 
-#include <stddef.h> // size_t
+#include "Kernel.h"
 
-int MemAlloc(void ** ptr, size_t bytesToAlloc);
-int MemAllocAligned(void ** ptr, size_t bytesToAlloc, size_t alignmentBytes);
-int MemFree(void ** ptr);
+void D3Q19ListAaPvGatherInit_PushSoA(LatticeDesc * ld, KernelData ** kernelData, Parameters * params);
+void D3Q19ListAaPvGatherInit_PushAoSoA(LatticeDesc * ld, KernelData ** kernelData, Parameters * params);
 
-int MemZero(void * ptr, size_t bytesToZero);
+void D3Q19ListAaPvGatherDeinit_PushSoA(LatticeDesc * ld, KernelData ** kernelData);
+void D3Q19ListAaPvGatherDeinit_PushAoSoA(LatticeDesc * ld, KernelData ** kernelData);
 
-#ifdef HAVE_MEMKIND
-int HbwAlloc(void ** ptr, size_t bytesToAlloc);
-int HbwAllocAligned(void ** ptr, size_t bytesToAlloc, size_t alignmentBytes);
-int HbwFree(void ** ptr);
-#endif
 
-#endif // __MEMORY_H__
+
+#endif // __BENCH_KERNEL_D3Q19_LIST_AA_PV_GATHER__

@@ -8,6 +8,10 @@
 //   Viktor Haag, 2016
 //   LSS, University of Erlangen-Nuremberg, Germany
 //
+//   Michael Hussnaetter, 2017-2018
+//   University of Erlangen-Nuremberg, Germany
+//   michael.hussnaetter -at- fau.de
+//
 //  This file is part of the Lattice Boltzmann Benchmark Kernels (LbmBenchKernels).
 //
 //  LbmBenchKernels is free software: you can redistribute it and/or modify
@@ -152,7 +156,7 @@ int main(int argc, char * argv[])
 #define LBM_BENCH_KERNELS_VERSION_MAJOR 0
 #define LBM_BENCH_KERNELS_VERSION_MINOR 1
 
-    printf("Lattice Boltzmann Benchmark Kernels (LbmBenchKernels) Copyright (C) 2016, 2017 LSS, RRZE\n");
+    printf("Lattice Boltzmann Benchmark Kernels (LbmBenchKernels) Copyright (C) 2016, 2017, 2018 LSS, RRZE\n");
     printf("This program comes with ABSOLUTELY NO WARRANTY; for details see LICENSE.\n");
 	printf("This is free software, and you are welcome to redistribute it under certain conditions.\n");
 	printf("\n");
@@ -346,7 +350,7 @@ int main(int argc, char * argv[])
 			printf("Usage:\n");
 			printf("./lbmbenchk -list\n");
 			printf("./lbmbenchk \n");
-			printf("      [-dims XxYyZ] [-geometry box|channel|pipe|porosity[-value]] [-iterations <iterations>] [-lattice-dump-ascii]\n");
+			printf("      [-dims XxYyZ] [-geometry box|channel|pipe|blocks[-value]] [-iterations <iterations>] [-lattice-dump-ascii]\n");
 			printf("      [-rho-in <density>] [-rho-out <density] [-omega <omega>] [-kernel <kernel>]\n");
 			printf("      [-periodic-x]\n");
 #ifdef STATISTICS
@@ -368,7 +372,7 @@ int main(int argc, char * argv[])
 			printf("\n");
 			printf("-dims XxYxZ		Specify geometry dimensions.\n");
 			printf("\n");
-			printf("-geometry porosity-<value>\n");
+			printf("-geometry blocks-<value>\n");
 			printf("                Geometetry with blocks of size <value> regularily layout out.\n");
 			printf("\n");
 			return 1;
@@ -441,7 +445,9 @@ int main(int argc, char * argv[])
 	printf("# - floating point:    UNKNOWN (%lu b)\n", sizeof(PdfT));
 #endif
 
-#ifdef VECTOR_AVX
+#if defined(VECTOR_AVX512)
+	printf("# - intrinsics:        AVX512 (VECTOR_AVX512 defined)\n");
+#elif defined(VECTOR_AVX)
 	printf("# - intrinsics:        AVX (VECTOR_AVX defined)\n");
 #elif defined(VECTOR_SSE)
 	printf("# - intrinsics:        SSE (VECTOR_SSE defined)\n");
@@ -469,11 +475,11 @@ int main(int argc, char * argv[])
 	printf("#   type:              %s\n", ld.Name);
 	printf("#   dimensions:        %d x %d x %d (x, y, z)\n", ld.Dims[0], ld.Dims[1], ld.Dims[2]);
 
-	printf("#   nodes total:       %d\n", ld.nObst + ld.nFluid);
-	printf("#   nodes fluid:       %d (including inlet & outlet)\n", ld.nFluid);
-	printf("#   nodes obstacles:   %d\n", ld.nObst);
-	printf("#   nodes inlet:       %d\n", ld.nInlet);
-	printf("#   nodes outlet:      %d\n", ld.nOutlet);
+	printf("#   nodes total:       % 10d\n", ld.nObst + ld.nFluid);
+	printf("#   nodes fluid:       % 10d (including inlet & outlet)\n", ld.nFluid);
+	printf("#   nodes obstacles:   % 10d\n", ld.nObst);
+	printf("#   nodes inlet:       % 10d\n", ld.nInlet);
+	printf("#   nodes outlet:      % 10d\n", ld.nOutlet);
 	printf("#   periodicity:       x: %d y: %d z: %d\n", ld.PeriodicX, ld.PeriodicY, ld.PeriodicZ);
 
 #ifdef VTK_OUTPUT
@@ -560,12 +566,8 @@ int main(int argc, char * argv[])
 
 	X_LIKWID_INIT();
 
-	double timeStart = Time();
-
 	// Call the LBM kernel
 	kd->Kernel(&ld, kd, &cd);
-
-	double duration = Time() - timeStart;
 
 	X_LIKWID_DEINIT();
 
@@ -577,11 +579,31 @@ int main(int argc, char * argv[])
 	KernelVerifiy(&ld, kd, &cd, &errorNorm);
 #endif
 
+	double duration 			= kd->Duration;
+	double loopBalance 			= kd->LoopBalance;
+	double dataVolGByte 		= loopBalance * ld.nFluid * cd.MaxIterations / 1024. / 1024. / 1024.;
+	double bandwidthGBytePerS 	= dataVolGByte / duration;
+
 	// Deinitialize kernel by calling its own deinitialization function
 	kf->Deinit(&ld, &kd);
 
-
 	double perf = (double)ld.nFluid * (double)cd.MaxIterations / duration / 1.e6;
+
+	printf("#\n");
+	printf("# Evaluation Stats\n");
+#ifdef VERIFICATION
+	printf("#   runtype:     \t%s  \n", "verification");
+#else
+	printf("#   runtype:     \t%s  \n", "benchmark");
+#endif
+	printf("#   runtime:           \t%.3f s\n", duration);
+	printf("#   iterations:        \t%d  \n", cd.MaxIterations);
+	printf("#   fluid cells:       \t%d \n", ld.nFluid);
+	printf("# Derived metrics\n");
+	printf("#   MEM data vol.:     \t%.2f GByte\n", dataVolGByte);
+	printf("#   MEM bandwidth:     \t%.2f GByte/s\n", bandwidthGBytePerS);
+	printf("#   performance:       \t%.3f MFLUP/s\n", perf);
+
 
 	printf("P:   %f MFLUP/s  t: %d  d: %f s  iter: %d  fnodes: %f x1e6  geo: %s  kernel: %s  %s  %s\n",
 		perf, nThreads, duration, cd.MaxIterations, ld.nFluid / 1e6,

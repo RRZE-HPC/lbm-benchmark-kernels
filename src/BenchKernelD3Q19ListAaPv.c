@@ -76,6 +76,8 @@ void FNAME(D3Q19ListAaPvKernel)(LatticeDesc * ld, KernelData * kernelData, CaseD
 		KernelStatistics(kd, ld, cd, 0);
 	#endif
 
+	X_KERNEL_START(kernelData);
+
 	// TODO: outer openmp parallel
 
 	for(int iter = 0; iter < maxIterations; iter += 2) {
@@ -138,6 +140,8 @@ void FNAME(D3Q19ListAaPvKernel)(LatticeDesc * ld, KernelData * kernelData, CaseD
 		#endif
 
 	} // for (int iter = 0; ...
+
+	X_KERNEL_END(kernelData);
 
 #ifdef VTK_OUTPUT
 	if (cd->VtkOutput) {
@@ -235,7 +239,7 @@ static void KernelEven(LatticeDesc * ld, KernelData * kernelData, CaseData * cd)
 
 	#define I(index, dir)	P_INDEX_3((nCells), (index), (dir))
 
-	for (int index = indexStartVec; index < indexStopVec; index += VSIZE) {
+	for (int index = indexStartVec; index < indexStopVec; index += VSIZE) { // LOOP list-aa-pv-even-vec
 
 
 		#define X(name, idx, idxinv, _x, _y, _z)	JOIN(vpdf_,name) = VLDU(&src[I(index, idx)]);
@@ -373,7 +377,7 @@ static void KernelEven(LatticeDesc * ld, KernelData * kernelData, CaseData * cd)
 
 	} // loop over fluid nodes
 
-	for (int index = indexStopVec; index < indexStop; ++index) {
+	for (int index = indexStopVec; index < indexStop; ++index) { // LOOP list-aa-pv-even-scalar
 
 		#define X(name, idx, idxinv, _x, _y, _z)	JOIN(pdf_,name) = src[I(index, idx)];
 		D3Q19_LIST

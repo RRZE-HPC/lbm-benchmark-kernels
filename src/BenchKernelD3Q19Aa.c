@@ -118,6 +118,8 @@ void FNAME(D3Q19AaKernel)(LatticeDesc * ld, KernelData * kernelData, CaseData * 
 	nThreads = omp_get_max_threads();
 	#endif
 
+	X_KERNEL_START(kernelData);
+
 	for (int iter = 0; iter < maxIterations; iter += 2) {
 
 		// --------------------------------------------------------------------
@@ -174,7 +176,7 @@ void FNAME(D3Q19AaKernel)(LatticeDesc * ld, KernelData * kernelData, CaseData * 
 					#pragma vector always
 					#pragma simd
 				#endif
-				for (int z = bZ; z < eZ; ++z) {
+				for (int z = bZ; z < eZ; ++z) { // LOOP aa-even
 
 
 					if (ld->Lattice[L_INDEX_4(ld->Dims, x - oX, y - oY, z - oZ)] == LAT_CELL_OBSTACLE) {
@@ -382,7 +384,7 @@ void FNAME(D3Q19AaKernel)(LatticeDesc * ld, KernelData * kernelData, CaseData * 
 					#pragma vector always
 					#pragma simd
 				#endif
-				for (int z = bZ; z < eZ; ++z) {
+				for (int z = bZ; z < eZ; ++z) { // LOOP aa-odd
 
 					#define I(x, y, z, dir)	P_INDEX_5(gDims, (x), (y), (z), (dir))
 
@@ -530,6 +532,8 @@ void FNAME(D3Q19AaKernel)(LatticeDesc * ld, KernelData * kernelData, CaseData * 
 
 
 	} // for (int iter = 0; ...
+
+	X_KERNEL_END(kernelData);
 
 	#ifdef VTK_OUTPUT
 

@@ -55,14 +55,14 @@ fi
 
 Config="$1"
 
-make clean-all
-
-make -j $NProc PRECISION=dp CONFIG=$Config TAG=$XTag-debug
-make -j $NProc PRECISION=dp CONFIG=$Config BUILD=$Build TAG=$XTag-v VERIFICATION=on
-make -j $NProc PRECISION=dp CONFIG=$Config BUILD=$Build TAG=$XTag-b BENCHMARK=on
-
-BinaryVDp="../bin/lbmbenchk-$Config-$Build-dp$XTag-v"
-BinaryBDp="../bin/lbmbenchk-$Config-$Build-dp$XTag-b"
+# make clean-all
+#
+# make -j $NProc PRECISION=dp CONFIG=$Config TAG=$XTag-debug
+# make -j $NProc PRECISION=dp CONFIG=$Config BUILD=$Build TAG=$XTag-v VERIFICATION=on
+# make -j $NProc PRECISION=dp CONFIG=$Config BUILD=$Build TAG=$XTag-b BENCHMARK=on
+#
+# BinaryVDp="../bin/lbmbenchk-$Config-$Build-dp$XTag-v"
+# BinaryBDp="../bin/lbmbenchk-$Config-$Build-dp$XTag-b"
 
 
 make -j $NProc PRECISION=sp CONFIG=$Config TAG=$XTag-debug

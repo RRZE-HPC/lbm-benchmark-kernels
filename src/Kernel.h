@@ -8,6 +8,10 @@
 //   Viktor Haag, 2016
 //   LSS, University of Erlangen-Nuremberg, Germany
 //
+//   Michael Hussnaetter, 2017-2018
+//   University of Erlangen-Nuremberg, Germany
+//   michael.hussnaetter -at- fau.de
+//
 //  This file is part of the Lattice Boltzmann Benchmark Kernels (LbmBenchKernels).
 //
 //  LbmBenchKernels is free software: you can redistribute it and/or modify
@@ -45,6 +49,12 @@
 
 #ifdef DATA_LAYOUT_AOS
 	#define DATA_LAYOUT_NAME AoS
+#endif
+
+#ifdef DATA_LAYOUT_AOSOA
+	#define DATA_LAYOUT_NAME AoSoA
+	// number of cells consecutively stored (-> array length)
+	#define AOSOA_BLOCK_SIZE 8
 #endif
 
 #ifdef PROP_MODEL_PUSH
@@ -187,6 +197,8 @@ typedef struct KernelData_ {
 	int * BounceBackPdfsSrc;
 	int * BounceBackPdfsDst;
 	int nBounceBackPdfs;
+	double LoopBalance;    	// loopBalance when set in kernel init, Main.c may use it to derive metrics
+	double Duration;	// duration when set in kernel routine, Main.c may use it to derive metrics
 
 	void (* BoundaryConditionsGetPdf)(struct KernelData_ * kd, int x, int y, int z, int dir, PdfT * pdf);
 	void (* BoundaryConditionsSetPdf)(struct KernelData_ * kd, int x, int y, int z, int dir, PdfT pdf);
@@ -197,6 +209,10 @@ typedef struct KernelData_ {
 	void (* Kernel)(LatticeDesc * ld, struct KernelData_ * kd, CaseData * cd);
 
 } KernelData;
+
+
+#define X_KERNEL_START(_kd) 	do { _kd->Duration = Time(); } while (0)
+#define X_KERNEL_END(_kd)		do { _kd->Duration = Time() - _kd->Duration; } while (0)
 
 typedef struct Parameters_ {
 	int nArgs;

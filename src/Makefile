@@ -8,6 +8,10 @@
 #   Viktor Haag, 2016
 #   LSS, University of Erlangen-Nuremberg, Germany
 #
+#   Michael Hussnaetter, 2017-2018
+#   University of Erlangen-Nuremberg, Germany
+#   michael.hussnaetter -at- fau.de
+#
 #  This file is part of the Lattice Boltzmann Benchmark Kernels (LbmBenchKernels).
 #
 #  LbmBenchKernels is free software: you can redistribute it and/or modify
@@ -141,6 +145,15 @@ OBJ_C = $(foreach SOURCE,$(SOURCES_C),$(OBJECT_DIR)/$(SOURCE:%.c=%.o)) \
 		$(OBJECT_DIR)/BenchKernelD3Q19AaVecSl_AaSoA.o \
 		$(OBJECT_DIR)/BenchKernelD3Q19AaVecSlCommon_AaSoA.o
 
+# Kernels which are using AVX-512 intrinsics.
+OBJ_C_ISA_AVX_512 = \
+		$(OBJECT_DIR)/BenchKernelD3Q19ListAaPvGatherAoSoA_PushAoSoA.o \
+		$(OBJECT_DIR)/BenchKernelD3Q19ListAaPvGatherAoSoACommon_PushAoSoA.o \
+		$(OBJECT_DIR)/BenchKernelD3Q19ListAaPvGather_PushSoA.o \
+		$(OBJECT_DIR)/BenchKernelD3Q19ListAaPvGatherCommon_PushSoA.o \
+		$(OBJECT_DIR)/BenchKernelD3Q19ListAaPvGatherHybrid_PushSoA.o \
+		$(OBJECT_DIR)/BenchKernelD3Q19ListAaPvGatherHybridCommon_PushSoA.o
+
 OBJ = $(OBJ_C)
 
 include ./config.$(CONFIG).mk
@@ -200,9 +213,14 @@ ifeq (on,$(LID_DRIVEN_CAVITY))
   PP_FLAGS += $(D)LID_DRIVEN_CAVITY
 endif
 
+ifeq (avx512,$(ISA))
+  PP_FLAGS += $(D)VECTOR_AVX512
+endif
+
 ifeq (avx,$(ISA))
   PP_FLAGS += $(D)VECTOR_AVX
 endif
+
 ifeq (sse,$(ISA))
   PP_FLAGS += $(D)VECTOR_SSE
 endif
@@ -215,6 +233,32 @@ ifeq (on,$(LIKWID))
   LD_LIBS  += $(LIKWID_LIB) -llikwid
 endif
 
+ifeq (HBM,$(ADJ_LIST_MEM_TYPE))
+  #MEMKIND is required for this!
+  MEMKIND      = on
+  C_FLAGS     += -DALLOC_ADJ_LIST_IN_HBM=1
+else
+  C_FLAGS     += -DALLOC_ADJ_LIST_IN_HBM=0
+endif
+
+ifeq (HBM,$(PDF_MEM_TYPE))
+  #MEMKIND is required for this!
+  MEMKIND      = on
+  C_FLAGS     += -DALLOC_PDF_IN_HBM=1
+else
+  C_FLAGS     += -DALLOC_PDF_IN_HBM=0
+endif
+
+ifeq (on, $(MEMKIND))
+  C_FLAGS     += -DHAVE_MEMKIND
+  LD_FLAGS    += -lmemkind
+endif
+
+# Prefetch settings
+SOFTWARE_PREFETCH_LOOKAHEAD_L2 ?= 0
+SOFTWARE_PREFETCH_LOOKAHEAD_L1 ?= 0
+C_FLAGS                        += -DSOFTWARE_PREFETCH_LOOKAHEAD_L2=$(SOFTWARE_PREFETCH_LOOKAHEAD_L2) -DSOFTWARE_PREFETCH_LOOKAHEAD_L1=$(SOFTWARE_PREFETCH_LOOKAHEAD_L1)
+
 
 ifeq (dp,$(PRECISION))
   PP_FLAGS += $(D)PRECISION_DP
@@ -226,6 +270,14 @@ ifeq (sp,$(PRECISION))
 else
   $(error PRECISION is only be allowed to be sp (single precision) or dp (doble precision))
 endif
+endif
+
+# Use AVX512 intrinsic kernels only when ISA=avx512 and we have double
+# precision support.
+ifeq (avx512,$(ISA))
+  ifeq (dp,$(PRECISION))
+    OBJ_C += $(OBJ_C_ISA_AVX_512)
+  endif
 endif
 
 # ARCH can only be assigned a string without a space. The space is escaped as
@@ -298,6 +350,10 @@ $(OBJECT_DIR)/%_PushAoS.o: %.c $(REBUILD_DEPS)
 	@$(ECHO_E) "compiling: $(COLOR_CYAN)$@$(COLOR_NO)    $(COLOR_MAGENTA)DATA_LAYOUT_AOS$(COLOR_NO) $(COLOR_MAGENTA)PROP_MODEL_PUSH$(COLOR_NO)"
 	$(CC) $(strip $(C_FLAGS)) $(strip $(PP_FLAGS)) $(D)DATA_LAYOUT_AOS $(D)PROP_MODEL_PUSH -c $< -o $@
 
+$(OBJECT_DIR)/%_PushAoSoA.o: %.c $(REBUILD_DEPS)
+	@$(ECHO_E) "compiling: $(COLOR_CYAN)$@$(COLOR_NO)    $(COLOR_MAGENTA)DATA_LAYOUT_AOSOA$(COLOR_NO) $(COLOR_MAGENTA)PROP_MODEL_PUSH$(COLOR_NO)"
+	$(Q)$(CC) $(strip $(C_FLAGS)) $(strip $(PP_FLAGS)) $(D)DATA_LAYOUT_AOSOA $(D)PROP_MODEL_PUSH -c $< -o $@
+
 $(OBJECT_DIR)/%_PullSoA.o: %.c $(REBUILD_DEPS)
 	@$(ECHO_E) "compiling: $(COLOR_CYAN)$@$(COLOR_NO)    $(COLOR_MAGENTA)DATA_LAYOUT_SOA$(COLOR_NO) $(COLOR_MAGENTA)PROP_MODEL_PULL$(COLOR_NO)"
 	$(CC) $(strip $(C_FLAGS)) $(strip $(PP_FLAGS)) $(D)DATA_LAYOUT_SOA $(D)PROP_MODEL_PULL -c $< -o $@
@@ -324,7 +380,7 @@ $(OBJECT_DIR)/%.o: %.c $(REBUILD_DEPS)
 
 
 # ------------------------------------------------------------------------
-# Following targets in princibal make only sure, that the directories
+# Following targets in principal make only sure, that the directories
 # are created if the do not exist already.
 
 $(DEP_DIR)/.target:

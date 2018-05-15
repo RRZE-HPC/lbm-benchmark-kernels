@@ -401,6 +401,10 @@ tr:nth-child(odd) {
 <div class="line">Viktor Haag, 2016</div>
 <div class="line">LSS, University of Erlangen-Nuremberg, Germany</div>
 <div class="line"><br /></div>
+<div class="line">Michael Hussnaetter, 2017-2018</div>
+<div class="line">University of Erlangen-Nuremberg, Germany</div>
+<div class="line">michael.hussnaetter -at- fau.de</div>
+<div class="line"><br /></div>
 </div>
 <div class="line">This file is part of the Lattice Boltzmann Benchmark Kernels (LbmBenchKernels).</div>
 <div class="line"><br /></div>
@@ -581,7 +585,7 @@ make clean-all
 <td>Select GCC or Intel compiler.</td>
 </tr>
 <tr><td>ISA</td>
-<td>avx, sse</td>
+<td>avx512, avx, sse</td>
 <td>avx</td>
 <td>Determines which ISA extension is used for macro definitions of the intrinsics. This is <em>not</em> the architecture the compiler generates code for.</td>
 </tr>
@@ -617,6 +621,35 @@ make clean-all
 </tr>
 </tbody>
 </table>
+<p><strong>Suboptions for ``ISA=avx512``</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="5%" />
+<col width="5%" />
+<col width="69%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">name</th>
+<th class="head">values</th>
+<th class="head">default</th>
+<th class="head">description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>SOFTWARE_PREFETCH_LOOKAHEAD_L1</td>
+<td>int &gt;= 0</td>
+<td>0</td>
+<td>Software prefetch lookahead of elements into L1 cache, value is multiplied by vector size (<tt class="docutils literal">VSIZE</tt>).</td>
+</tr>
+<tr><td>SOFTWARE_PREFETCH_LOOKAHEAD_L2</td>
+<td>int &gt;= 0</td>
+<td>0</td>
+<td>Software prefetch lookahead of elements into L2 cache, value is multiplied by vector size (<tt class="docutils literal">VSIZE</tt>).</td>
+</tr>
+</tbody>
+</table>
+<p>Please note this options require AVX-512 PF support of the target processor.</p>
 </div>
 </div>
 <div class="section" id="invocation">
@@ -637,7 +670,7 @@ LBM Benchmark Kernels 0.1, compiled Jul  5 2017 21:59:22, type: benchmark
 Usage:
 ./lbmbenchk -list
 ./lbmbenchk
-    [-dims XxYyZ] [-geometry box|channel|pipe|blocks[-&lt;block size&gt;]] [-iterations &lt;iterations&gt;] [-lattice-dump-ascii]
+    [-dims XxYxZ] [-geometry box|channel|pipe|blocks[-&lt;block size&gt;]] [-iterations &lt;iterations&gt;] [-lattice-dump-ascii]
     [-rho-in &lt;density&gt;] [-rho-out &lt;density] [-omega &lt;omega&gt;] [-kernel &lt;kernel&gt;]
     [-periodic-x]
     [-t &lt;number of threads&gt;]
@@ -952,13 +985,14 @@ created make sure the binary was compiled with:</p>
 <ul class="simple">
 <li><tt class="docutils literal">BENCHMARK=on</tt> (default if not overriden) and</li>
 <li><tt class="docutils literal">BUILD=release</tt> (default if not overriden) and</li>
-<li>the correct ISA for macros is used, selected via <tt class="docutils literal">ISA</tt> and</li>
+<li>the correct ISA for macros (i.e. intrinsics) is used, selected via <tt class="docutils literal">ISA</tt> and</li>
 <li>use <tt class="docutils literal">TARCH</tt> to specify the architecture the compiler generates code for.</li>
 </ul>
 <div class="section" id="intel-compiler">
 <h2><a class="toc-backref" href="#id18">4.1&nbsp;&nbsp;&nbsp;Intel Compiler</a></h2>
 <p>For the Intel compiler one can specify depending on the target ISA extension:</p>
 <ul class="simple">
+<li>SSE:          <tt class="docutils literal"><span class="pre">TARCH=-xSSE4.2</span></tt></li>
 <li>AVX:          <tt class="docutils literal"><span class="pre">TARCH=-xAVX</span></tt></li>
 <li>AVX2 and FMA: <tt class="docutils literal"><span class="pre">TARCH=-xCORE-AVX2,-fma</span></tt></li>
 <li>AVX512:       <tt class="docutils literal"><span class="pre">TARCH=-xCORE-AVX512</span></tt></li>
@@ -974,12 +1008,26 @@ make ISA=avx TARCH=-xCORE-AVX2,-fma
 </pre>
 <p>WARNING: ISA is here still set to <tt class="docutils literal">avx</tt> as currently we have the FMA intrinsics not
 implemented. This might change in the future.</p>
+<!-- TODO: add isa=avx512 and add docu for knl -->
+<!-- TODO: kein prefetching wenn AVX-512 PF nicht unterstuetz wird -->
 <p>Compiling for an architecture supporting AVX-512 (Skylake):</p>
 <pre class="literal-block">
-make ISA=avx TARCH=-xCORE-AVX512
+make ISA=avx512 TARCH=-xCORE-AVX512
 </pre>
-<p>WARNING: ISA is here still set to <tt class="docutils literal">avx</tt> as currently we have no implementation for the
-AVX512 intrinsics. This might change in the future.</p>
+<p>Please note that for the AVX512 gather kernels software prefetching for the
+gather instructions is disabled per default.
+To enable it set <tt class="docutils literal">SOFTWARE_PREFETCH_LOOKAHEAD_L1</tt> and/or
+<tt class="docutils literal">SOFTWARE_PREFETCH_LOOKAHEAD_L2</tt> to a value greater than <tt class="docutils literal">0</tt> during
+compilation. Note that this requires AVX-512 PF support from the target
+processor.</p>
+<p>Compiling for MIC architecture KNL supporting AVX-512 and AVX-512 PF:</p>
+<pre class="literal-block">
+make ISA=avx512 TARCH=-xMIC-AVX512
+</pre>
+<p>or optionally with software prefetch enabled:</p>
+<pre class="literal-block">
+make ISA=avx512 TARCH=-xMIC-AVX512 SOFTWARE_PREFETCH_LOOKAHEAD_L1=&lt;value&gt; SOFTWARE_PREFETCH_LOOKAHEAD_L2=&lt;value&gt;
+</pre>
 </div>
 <div class="section" id="pinning">
 <h2><a class="toc-backref" href="#id19">4.2&nbsp;&nbsp;&nbsp;Pinning</a></h2>
@@ -1232,7 +1280,7 @@ Roofline: an insightful visual performance model for multicore architectures.
 Commun. ACM, 52(4):65-76, Apr 2009. doi:10.1145/1498765.1498785</td></tr>
 </tbody>
 </table>
-<p>Document was generated at 2018-01-09 11:54.</p>
+<p>Document was generated at 2018-05-10 14:10.</p>
 </div>
 </div>
 </body>

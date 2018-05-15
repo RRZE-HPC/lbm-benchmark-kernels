@@ -28,21 +28,35 @@
 //  along with LbmBenchKernels.  If not, see <http://www.gnu.org/licenses/>.
 //
 // --------------------------------------------------------------------------
-#ifndef __MEMORY_H__
-#define __MEMORY_H__
+#ifndef __BENCH_KERNEL_D3Q19_LIST_AA_PV_GATHER_HYBRID_COMMON_H__
+#define __BENCH_KERNEL_D3Q19_LIST_AA_PV_GATHER_HYBRID_COMMON_H__
 
-#include <stddef.h> // size_t
-
-int MemAlloc(void ** ptr, size_t bytesToAlloc);
-int MemAllocAligned(void ** ptr, size_t bytesToAlloc, size_t alignmentBytes);
-int MemFree(void ** ptr);
-
-int MemZero(void * ptr, size_t bytesToZero);
-
-#ifdef HAVE_MEMKIND
-int HbwAlloc(void ** ptr, size_t bytesToAlloc);
-int HbwAllocAligned(void ** ptr, size_t bytesToAlloc, size_t alignmentBytes);
-int HbwFree(void ** ptr);
+#if !defined(DATA_LAYOUT_SOA) && !defined(DATA_LAYOUT_AOSOA)
+	#error List Gather Hybrid works only with DATA_LAYOUT_SOA or DATA_LAYOUT_AOSOA
 #endif
 
-#endif // __MEMORY_H__
+#include "BenchKernelD3Q19ListAaCommon.h"
+
+typedef struct KernelDataListRia_ {
+	KernelDataList kdl;
+
+	// Array contains information for loop start indices with the following scheme for every thread:
+	// scalar peel start | (vectorized load store | vectorized gather scatter) ... | scalar remainder.
+	// Example for 3 threads with ! indicating thread boundaries 
+	// [sp,vls,vgs,...,vls,vgs,sr ! sp, vls, vgs, ..., vls, vgs, sr ! sp, vls, vgs, ..., vls, vgs, sr]
+	int * loopStartIndices;
+	int nLoopStartIndices;  // Number of entries in loopStartIndices array.
+
+	// Array contains (for each thread) an index into loopStartIndices.
+	int * oddKernelThreadStartIndices;
+	// Number of entries in threadStartIndices
+	int nOddKernelThreadStartIndices;
+
+} KernelDataListRia;
+
+// Macro for casting KernelData * to KernelDataList *.
+#define KDLR(_x_)	((KernelDataListRia *)(_x_))
+
+
+#endif // __BENCH_KERNEL_D3Q19_LIST_AA_PV_GATHER_HYBRID_COMMON_H__
+

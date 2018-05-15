@@ -98,6 +98,8 @@ void FNAME(D3Q19ListAaKernel)(LatticeDesc * ld, KernelData * kernelData, CaseDat
 		KernelStatistics(kd, ld, cd, 0);
 	#endif
 
+	X_KERNEL_START(kernelData);
+
 	// TODO: outer openmp parallel
 	for(int iter = 0; iter < maxIterations; iter += 2) {
 
@@ -122,7 +124,7 @@ void FNAME(D3Q19ListAaKernel)(LatticeDesc * ld, KernelData * kernelData, CaseDat
 		#pragma vector always
 		#pragma simd
 #endif
-		for (int index = 0; index < nFluid; ++index) {
+		for (int index = 0; index < nFluid; ++index) { // LOOP list-aa-even
 
 
 			#define I(index, dir)	P_INDEX_3((nCells), (index), (dir))
@@ -259,7 +261,7 @@ void FNAME(D3Q19ListAaKernel)(LatticeDesc * ld, KernelData * kernelData, CaseDat
 #ifdef INTEL_OPT_DIRECTIVES
 		#pragma ivdep
 #endif
-		for (int index = 0; index < nFluid; ++index) {
+		for (int index = 0; index < nFluid; ++index) { // LOOP list-aa-odd
 
 
 			adjListIndex = index * N_D3Q19_IDX;
@@ -396,6 +398,8 @@ void FNAME(D3Q19ListAaKernel)(LatticeDesc * ld, KernelData * kernelData, CaseDat
 
 
 	} // for (int iter = 0; ...
+
+	X_KERNEL_END(kernelData);
 
 
 #ifdef VTK_OUTPUT

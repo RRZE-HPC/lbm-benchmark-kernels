@@ -28,21 +28,32 @@
 //  along with LbmBenchKernels.  If not, see <http://www.gnu.org/licenses/>.
 //
 // --------------------------------------------------------------------------
-#ifndef __MEMORY_H__
-#define __MEMORY_H__
+#ifndef __BENCH_KERNEL_D3Q19_LIST_AA_PV_GATHER_AOSOA_COMMON_H__
+#define __BENCH_KERNEL_D3Q19_LIST_AA_PV_GATHER_AOSOA_COMMON_H__
 
-#include <stddef.h> // size_t
-
-int MemAlloc(void ** ptr, size_t bytesToAlloc);
-int MemAllocAligned(void ** ptr, size_t bytesToAlloc, size_t alignmentBytes);
-int MemFree(void ** ptr);
-
-int MemZero(void * ptr, size_t bytesToZero);
-
-#ifdef HAVE_MEMKIND
-int HbwAlloc(void ** ptr, size_t bytesToAlloc);
-int HbwAllocAligned(void ** ptr, size_t bytesToAlloc, size_t alignmentBytes);
-int HbwFree(void ** ptr);
+#if !defined(DATA_LAYOUT_AOSOA)
+	#error List Gather AoSoA works only with DATA_LAYOUT_AOSOA
 #endif
 
-#endif // __MEMORY_H__
+#include "BenchKernelD3Q19ListAaCommon.h"
+
+typedef struct KernelDataListRia_ {
+	KernelDataList kdl;
+
+	// Array contains information of how many adjacent nodes share the same access pattern.
+	uint32_t * ConsecNodes;
+	uint32_t nConsecNodes;  // Number of entries in ConsecNodes array.
+
+	// Array contains (for each thread) an index into ConsecNodes.
+	uint32_t * ConsecThreadIndices;
+	// Number of entries in ConsecThreadIndices.
+	uint32_t nConsecThreadIndices;
+
+} KernelDataListRia;
+
+// Macro for casting KernelData * to KernelDataList *.
+#define KDLR(_x_)	((KernelDataListRia *)(_x_))
+
+
+#endif // __BENCH_KERNEL_D3Q19_LIST_AA_PV_GATHER_AOSOA_COMMON_H__
+
