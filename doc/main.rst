@@ -550,8 +550,6 @@ Machine Specifications
 
 **Skylake, Intel Xeon Gold 6148**
 
-NOTE: currently we only use AVX2 intrinsics.
-
 - Skylake server architecture, AVX2, AVX512, 2 FMA units
 - 20 cores, 2.4 GHz
 - SMT enabled
@@ -628,9 +626,9 @@ Single Socket Results
   * - |perf_meggie_dp|
   * - Broadwell, Intel Xeon E5-2630 v4, Single Precision
   * - |perf_meggie_sp|
-  * - Skylake, Intel Xeon Gold 6148, Double Precision, **NOTE: currently we only use AVX2 intrinsics.**
+  * - Skylake, Intel Xeon Gold 6148, Double Precision
   * - |perf_skylakesp2_dp|
-  * - Skylake, Intel Xeon Gold 6148, Single Precision, **NOTE: currently we only use AVX2 intrinsics.**
+  * - Skylake, Intel Xeon Gold 6148, Single Precision
   * - |perf_skylakesp2_sp|
   * - Zen, AMD Ryzen 7 1700X, Double Precision
   * - |perf_summitridge1_dp|

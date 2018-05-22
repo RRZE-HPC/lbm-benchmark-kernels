@@ -277,6 +277,7 @@ endif
 ifeq (avx512,$(ISA))
   ifeq (dp,$(PRECISION))
     OBJ_C += $(OBJ_C_ISA_AVX_512)
+    PP_FLAGS += $(D)VECTOR_AVX512_GATHER
   endif
 endif
 

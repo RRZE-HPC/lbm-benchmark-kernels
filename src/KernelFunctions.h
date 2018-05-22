@@ -39,7 +39,7 @@
 #include "BenchKernelD3Q19ListAa.h"
 #include "BenchKernelD3Q19ListAaRia.h"
 #include "BenchKernelD3Q19ListAaPv.h"
-#ifdef VECTOR_AVX512
+#ifdef VECTOR_AVX512_GATHER
 #include "BenchKernelD3Q19ListAaPvGatherAoSoA.h"
 #include "BenchKernelD3Q19ListAaPvGather.h"
 #include "BenchKernelD3Q19ListAaPvGatherHybrid.h"
@@ -75,7 +75,7 @@ KernelFunctions g_kernels[] =
 		.Init   = D3Q19ListAaInit_PushAoS,
 		.Deinit = D3Q19ListAaDeinit_PushAoS
 	},
-#ifdef VECTOR_AVX512
+#ifdef VECTOR_AVX512_GATHER
 	{
 		.Name   = "list-aa-pv-gather-aosoa",
 		.Init   = D3Q19ListAaPvGatherAoSoAInit_PushAoSoA,

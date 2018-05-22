@@ -592,7 +592,7 @@ make clean-all
 <tr><td>OPENMP</td>
 <td>on, off</td>
 <td>on</td>
-<td>OpenMP, i.,e.. threading support.</td>
+<td>OpenMP, i.e. threading support.</td>
 </tr>
 <tr><td>PRECISION</td>
 <td>dp, sp</td>
@@ -637,6 +637,22 @@ make clean-all
 </tr>
 </thead>
 <tbody valign="top">
+<tr><td>ADJ_LIST_MEM_TYPE</td>
+<td>HBM</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td>Determines memory location of adjacency list array, DRAM or HBM.</td>
+</tr>
+<tr><td>PDF_MEM_TYPE</td>
+<td>HBM</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td>Determines memory location of PDF array, DRAM or HBM.</td>
+</tr>
 <tr><td>SOFTWARE_PREFETCH_LOOKAHEAD_L1</td>
 <td>int &gt;= 0</td>
 <td>0</td>
@@ -1153,7 +1169,6 @@ which mimics the kernels memory access pattern and the kernel's loop balance
 </li>
 </ul>
 <p><strong>Skylake, Intel Xeon Gold 6148</strong></p>
-<p>NOTE: currently we only use AVX2 intrinsics.</p>
 <ul class="simple">
 <li>Skylake server architecture, AVX2, AVX512, 2 FMA units</li>
 <li>20 cores, 2.4 GHz</li>
@@ -1225,11 +1240,11 @@ which mimics the kernels memory access pattern and the kernel's loop balance
 </tr>
 <tr><td><img alt="perf_meggie_sp" src="images/benchmark-meggie-sp.png" style="width: 1000.0px; height: 250.0px;" /></td>
 </tr>
-<tr><td>Skylake, Intel Xeon Gold 6148, Double Precision, <strong>NOTE: currently we only use AVX2 intrinsics.</strong></td>
+<tr><td>Skylake, Intel Xeon Gold 6148, Double Precision</td>
 </tr>
 <tr><td><img alt="perf_skylakesp2_dp" src="images/benchmark-skylakesp2-dp.png" style="width: 1000.0px; height: 250.0px;" /></td>
 </tr>
-<tr><td>Skylake, Intel Xeon Gold 6148, Single Precision, <strong>NOTE: currently we only use AVX2 intrinsics.</strong></td>
+<tr><td>Skylake, Intel Xeon Gold 6148, Single Precision</td>
 </tr>
 <tr><td><img alt="perf_skylakesp2_sp" src="images/benchmark-skylakesp2-sp.png" style="width: 1000.0px; height: 250.0px;" /></td>
 </tr>
@@ -1280,7 +1295,7 @@ Roofline: an insightful visual performance model for multicore architectures.
 Commun. ACM, 52(4):65-76, Apr 2009. doi:10.1145/1498765.1498785</td></tr>
 </tbody>
 </table>
-<p>Document was generated at 2018-05-10 14:10.</p>
+<p>Document was generated at 2018-05-22 10:11.</p>
 </div>
 </div>
 </body>

@@ -195,7 +195,7 @@ static void ParseParameters(Parameters * params, int * blk, int * nTmpArray, Pad
 	Assert(blk != NULL);
 
 	blk[0] = 0; blk[1] = 0; blk[2] = 0;
-	*nTmpArray = 152;
+	*nTmpArray = 152 - (152 % VSIZE);
 	*padInfo = NULL;
 
 	#define ARG_IS(param)                   (!strcmp(params->KernelArgs[i], param))
@@ -491,7 +491,9 @@ static void FNAME(Init)(LatticeDesc * ld, KernelData ** kernelData, Parameters *
 	}
 
 	// We padd each stream of a PDF array for a complete cache line.
-	nCells = nCells + (8 - nCells % 8);
+	int nElementsPerCl = 64 / sizeof(PdfT);
+
+	nCells = nCells + (nElementsPerCl - nCells % nElementsPerCl);
 
 	Assert(nCells % VSIZE == 0);
 

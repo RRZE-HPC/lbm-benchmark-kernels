@@ -135,7 +135,40 @@
 #elif defined(PRECISION_SP)
 
 	#ifdef VECTOR_AVX512
-		#error Single precision intrinsic kernels for AVX512 are currently not implemented.
+
+		#include <immintrin.h>
+		// Vector size in double-precision floatin-point numbers.
+		#define VSIZE 	16
+
+		#define VPDFT				__m512
+
+		#define VSET(scalar)		_mm512_set1_ps(scalar)
+		// #define VSETI32(scalar)     _mm256_set1_epi32(scalar)
+
+		#define VLD(expr)			_mm512_load_ps(expr)
+		#define VLDU(expr)			_mm512_loadu_ps(expr)
+		#define VLIU(expr)			_mm256_loadu_si256((__m256i const *)expr)
+		// #define VLI64(expr)			_mm512_load_epi64(expr)
+
+		#define VST(dst, src)		_mm512_store_ps(dst, src)
+		#define VSTU(dst, src)		_mm512_storeu_ps(dst, src)
+		#define VSTNT(dst, src)		_mm512_stream_ps(dst, src)
+
+		// #define VG32(offsets, base, scale)	_mm512_i32gather_pd(offsets, base, scale)
+		// #define VG64(offsets, base, scale)	_mm512_i64gather_pd(offsets, base, scale)
+
+		// #define VPG32(offsets, base, scale, hint) _mm512_prefetch_i32gather_pd(offsets, base, scale, hint)
+
+		// #define VS32(dst_base, dst_offsets, src, scale)	_mm512_i32scatter_pd(dst_base, dst_offsets, src, scale)
+		// #define VS64(dst_base, dst_offsets, src, scale)	_mm512_i64scatter_pd(dst_base, dst_offsets, src, scale)
+
+		// #define VPS32(dst_base, dst_offsets, scale, hint) _mm512_prefetch_i32scatter_pd(dst_base, dst_offsets, scale, hint)
+
+		#define VMUL(a, b)			_mm512_mul_ps(a, b)
+		#define VADD(a, b)			_mm512_add_ps(a, b)
+		// #define VADDI32(a,b)		_mm256_add_epi32(a,b)
+		// #define VMULI32(a,b)		_mm256_mul_epi32(a,b)
+		#define VSUB(a, b)			_mm512_sub_ps(a, b)
 	#endif
 
 	#ifdef VECTOR_AVX

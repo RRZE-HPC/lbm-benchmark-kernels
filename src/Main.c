@@ -455,6 +455,10 @@ int main(int argc, char * argv[])
 	printf("# - intrinsics:        UNKNOWN\n");
 #endif
 
+#if defined(VECTOR_AVX512_GATHER)
+	printf("# - intrinsics:        AVX512 gather (VECTOR_AVX512_GATHER defined)\n");
+#endif
+
 	printf("# - defines:           ");
 	for (int j = 0; j < N_ELEMS(defines); ++j) {
 		printf("%s ", defines[j]);
