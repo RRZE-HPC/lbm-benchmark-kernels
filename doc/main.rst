@@ -649,6 +649,23 @@ The Lattice Boltzmann Benchmark Kernels are licensed under GPLv3.
 Acknowledgements
 ================
 
+If you use the benchmark kernels you can cite us:
+
+M. Wittmann, V. Haag, T. Zeiser, H. Köstler, and G. Wellein: Lattice Boltzmann
+Benchmark Kernels as a Testbed for Performance Analysis, (2018), Computer &
+Fluids, Special Issue DSFD2017. doi:10.1016/j.compfluid.2018.03.030.
+
+Bibtex entry::
+
+    @article{wittmann-2018,
+        author  = {M. Wittmann and V. Haag and T. Zeiser and H. K\"ostler and G. Wellein},
+        title   = {Lattice {B}oltzmann benchmark kernels as a testbed for performance analysis},
+        journal = {Computers \& Fluids},
+        year    = {2018},
+        issn    = {0045-7930},
+        doi     = {10.1016/j.compfluid.2018.03.030},
+    }
+
 This work was funded by BMBF, grant no. 01IH15003A (project SKAMPY).
 
 This work was funded by KONWHIR project OMI4PAPS.
